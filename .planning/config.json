@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "project_name": "Targetspro Ad Spend Monitoring Platform",
+  "model_profile": "quality",
+  "workflow": {
+    "research_before_planning": true,
+    "verify_after_execution": true,
+    "plan_check_before_execution": true,
+    "auto_commit": true
+  },
+  "created_at": "2026-02-11"
+}
