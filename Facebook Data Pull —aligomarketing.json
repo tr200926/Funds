@@ -1,0 +1,1157 @@
+{
+  "name": "Facebook Data Pull —aligomarketing",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// الوقت الحالي بتوقيت القاهرة\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));\nconst yesterday = new Date(now);\nyesterday.setDate(now.getDate() - 1);\n\n// أول يوم في الشهر\nconst startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);\n\n// تنسيق التاريخ: yyyy-mm-dd\nfunction formatDate(d) {\n  const day = String(d.getDate()).padStart(2, '0');\n  const month = String(d.getMonth() + 1).padStart(2, '0');\n  const year = d.getFullYear();\n  return `${year}-${month}-${day}`;\n}\n\n// تنسيق الوقت: h:mm AM/PM\nfunction formatTime(d) {\n  let hours = d.getHours();\n  const minutes = String(d.getMinutes()).padStart(2, '0');\n  const ampm = hours >= 12 ? 'PM' : 'AM';\n\n  hours = hours % 12;\n  if (hours === 0) hours = 12;\n\n  return `${hours}:${minutes} ${ampm}`;\n}\n\n// nowFormatted بالشكل النهائي: \"2025-08-03   9:22 PM\"\nconst nowFormatted = formatDate(now) + '   ' + formatTime(now);\n\nreturn [\n  {\n    json: {\n      nowFormatted,                         // \"2025-08-03   9:22 PM\"\n      today: formatDate(now),              // \"2025-08-03\"\n      yesterday: formatDate(yesterday),    // \"2025-08-02\"\n      startOfMonth: formatDate(startOfMonth) // \"2025-08-01\"\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1872,
+        1440
+      ],
+      "id": "e68843f6-5fba-40da-bcc8-0c39b0b17185",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v22.0",
+        "node": "={{ $json['Account ID'] }}",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "funding_source_details{display_string}"
+              },
+              {
+                "name": "name"
+              },
+              {
+                "name": "amount_spent"
+              },
+              {
+                "name": "balance"
+              },
+              {
+                "name": "account_status"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        1248
+      ],
+      "id": "23d9aa78-ce0f-4602-940b-58839348316b",
+      "name": "Facebook Graph API5",
+      "retryOnFail": false,
+      "alwaysOutputData": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "x0GIizNGjoBNjkuZ",
+          "name": "Facebook Graph account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "hostUrl": "=graph.facebook.com",
+        "graphApiVersion": "v22.0",
+        "node": "={{ $json['Account ID'] }}",
+        "edge": "insights",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "spend,date_start,date_stop,account_id,account_name"
+              }
+            ]
+          },
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "time_range[since]",
+                "value": "={{ $('Code').item.json.yesterday }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $('Code').item.json.yesterday }}"
+              }
+            ]
+          },
+          "queryParametersJson": "{\n  \"time_increment\": \"1\",\n  \"level\": \"account\"\n}"
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        1408
+      ],
+      "id": "a75b079e-a9c1-4299-ad38-acbdd37bdb11",
+      "name": "Get Daily Spend1",
+      "retryOnFail": false,
+      "alwaysOutputData": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "x0GIizNGjoBNjkuZ",
+          "name": "Facebook Graph account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  item.json.rowIndex = index + 2; // +2 علشان الصف الأول فيه العناوين\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        1408
+      ],
+      "id": "f585631e-e08d-44df-b44e-9900f166bc81",
+      "name": "Code8"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map((item, index) => {\n  item.json.rowIndex = index + 2; // +2 علشان الصف الأول فيه العناوين\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        1584
+      ],
+      "id": "d388f307-c93b-4d72-ac3c-45dd23686601",
+      "name": "Code9"
+    },
+    {
+      "parameters": {
+        "content": "aligomarketing",
+        "height": 96
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2128,
+        1376
+      ],
+      "typeVersion": 1,
+      "id": "ccb7ee13-349a-4729-906e-c2689cae5860",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// جدول HTML\nlet html = `\n<p>Dear Team,</p>\n<p>Below are the ad accounts that need funding:</p>\n\n<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;\">\n  <tr>\n    <th>Account name</th>\n    <th>Account ID</th>\n    <th>Available funds</th>\n    <th>Date</th>\n    <th>Status</th>\n  </tr>\n`;\n\n// بيانات الفلاتر (أكاونتات محتاجة تمويل)\nfor (let i = 0; i < items.length; i++) {\n  const row = items[i].json;\n\n  html += `\n    <tr>\n      <td>${row[\"Account name \"] || ''}</td>\n      <td>${row[\"Account ID\"] || ''}</td>\n      <td>${row[\"Available funds\"] || ''}</td>\n      <td>${row[\"Date\"] || ''}</td>\n      <td>${row[\"Status\"] || ''}</td>\n    </tr>\n  `;\n}\n\nhtml += '</table>';\n\n// الإيميلات اللي هتبعتلها\nconst emails = [\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\",\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\",\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\",\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\",\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\",\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\"\n];\n\n// نرجع HTML لكل إيميل\nreturn emails.map(email => {\n  return {\n    json: {\n      email: email,\n      html: html\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2272,
+        1216
+      ],
+      "id": "8c2261f2-998d-454a-964d-ddcda7f9330a",
+      "name": "code=> table"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst hour = now.getUTCHours() + 3; // تعديل للـ timezone\nconst adjustedHour = (hour + 24) % 24; // عشان ما يبقاش أكبر من 23 أو أقل من 0\n\nif (adjustedHour >= 9 && adjustedHour < 12) {\n  return [{ json: { send: true } }];\n} else {\n  return [{ json: { send: false } }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        1232
+      ],
+      "id": "a8b5513a-20fc-4918-bd2b-59b1a5ea0af3",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const row = item.json;\n\n  // عدل على الأعمدة حسب اسم الشيت بتاعك\n  return row[\"Account name \"] || row[\"Account ID\"] || row[\"Available funds\"] || row[\"Date\"] || row[\"Status\"];\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1568,
+        1440
+      ],
+      "id": "63f6b633-216c-48ab-8a74-22a5b89c0f53",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7bfe0ffc-8f88-49e4-b7f2-5d599b880db9",
+              "leftValue": "={{ $json.send }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1536,
+        1072
+      ],
+      "id": "3474705e-b908-4e6e-bd17-dfbce395da6f",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  let balanceStr = item.json[\"Available funds\"];\n  const threshold = parseFloat(item.json[\"if\"]);\n\n  if (!balanceStr || isNaN(threshold)) return false;\n\n  // استخراج الرقم من النص حتى لو فيه EGP وأقواس\n  const match = balanceStr.match(/EGP\\s*([\\d,]+\\.\\d{2})/);\n  if (!match) return false;\n\n  const balance = parseFloat(match[1].replace(/,/g, \"\"));\n  if (isNaN(balance)) return false;\n\n  return balance <= threshold;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        1216
+      ],
+      "id": "949e61bc-8d4e-47dc-be57-26c06806b312",
+      "name": "Filter3."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "__REDACTED_GOOGLE_SHEET_ID__",
+          "mode": "list",
+          "cachedResultName": "Abdo n8n Tracking Spending Targetspro",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1396536384,
+          "mode": "list",
+          "cachedResultName": "aligomarketing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit#gid=1396536384"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1792,
+        1024
+      ],
+      "id": "9c923880-ace1-4089-a301-1de0b3c871d3",
+      "name": "Get row(s) in sheet3.",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lexbktrcyr528ypY",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "         code=>table   \nThis code generates a styled HTML table showing all ad accounts that require funding, based on filtered input data. It then sends the same table content via email to multiple recipients (__REDACTED_EMAIL_SET_IN_CONFIG__\n__REDACTED_EMAIL_SET_IN_CONFIG__\n__REDACTED_EMAIL_SET_IN_CONFIG__\n__REDACTED_EMAIL_SET_IN_CONFIG__\n__REDACTED_EMAIL_SET_IN_CONFIG__\n__REDACTED_EMAIL_SET_IN_CONFIG__\n)\n",
+        "height": 320,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        1200
+      ],
+      "typeVersion": 1,
+      "id": "eb7b9422-e0a6-4781-83c5-89760660c0d9",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "fromEmail": "Targetspro info@targetspro.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Urgent: Ad Accounts Need Funding",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2592,
+        1216
+      ],
+      "id": "76bb3d35-cc6a-4f09-bd8d-88f11d3088a4",
+      "name": "Send email2",
+      "webhookId": "8428a0b7-e845-47a2-af7e-f78a16dab087",
+      "credentials": {
+        "smtp": {
+          "id": "TweDsn9rC0dnr1Pd",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * يفلتر العناصر الناقصة، ويضيف rowIndex، وtimestamp بتوقيت القاهرة\n * بالصيغة: YYYY-MM-DD  h:mm AM/PM\n */\n\nconst required = [\"name\", \"amount_spent\", \"balance\"];\n\nfunction formatTimestampCairo(date) {\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone: \"Africa/Cairo\",\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hour: \"numeric\",\n    minute: \"2-digit\",\n    hour12: true,\n  }).formatToParts(date);\n\n  const get = type => parts.find(p => p.type === type)?.value || \"\";\n  const year = get(\"year\");\n  const month = get(\"month\");\n  const day = get(\"day\");\n  let hour = get(\"hour\");\n  const minute = get(\"minute\");\n  const dayPeriod = get(\"dayPeriod\"); // AM / PM\n\n  hour = String(parseInt(hour, 10)); // إزالة الصفر من الساعة\n  return `${year}-${month}-${day}  ${hour}:${minute} ${dayPeriod}`;\n}\n\nconst now = new Date();\n\nreturn items\n  // فلترة العناصر الناقصة\n  .filter(item => {\n    const j = item?.json || {};\n    return required.every(k =>\n      Object.prototype.hasOwnProperty.call(j, k) &&\n      j[k] !== undefined &&\n      j[k] !== null &&\n      String(j[k]).trim() !== \"\"\n    );\n  })\n  // إضافة rowIndex + timestamp\n  .map((item, index) => {\n    if (!item.json) item.json = {};\n    if (!item.json.name) item.json.name = \"\";\n\n    item.json.rowIndex = index + 2; // +2 علشان الصف الأول فيه العناوين\n    item.json.timestamp = formatTimestampCairo(now);\n\n    return item;\n  });\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1248
+      ],
+      "id": "6a5be374-1ee2-4e45-8890-60b3a0979522",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const status = String(item.json.account_status).trim();\n\n  item.json.Status = status === \"1\" ? \"Active\" : \"Inactive\";\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        1248
+      ],
+      "id": "13f55de9-8348-4b03-9640-9e1a74106617",
+      "name": "status"
+    },
+    {
+      "parameters": {
+        "content": "يفلتر العناصر الناقصة (من الحقول المطلوبة).\n\nيضيف rowIndex (مع +2 علشان العناوين).\n\nيضيف timestamp بتوقيت القاهرة.",
+        "height": 144,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1360,
+        1712
+      ],
+      "typeVersion": 1,
+      "id": "9053b17e-0c18-445a-a3c3-b5843e43463f",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Flatten + filter Facebook Daily Spend\n * - يتعامل مع items[].json.data[]\n * - يفلتر أي صف ناقص spend/date_start/date_stop\n * - يضيف rowIndex يبدأ من 2\n */\nconst required = [\"spend\", \"date_start\", \"date_stop\"];\n\nlet row = 2;\nconst out = [];\n\nfor (const it of items) {\n  const arr = it?.json?.data;\n  if (!Array.isArray(arr) || arr.length === 0) continue;\n\n  for (const j of arr) {\n    const ok = required.every(k =>\n      j[k] !== undefined && j[k] !== null && String(j[k]).trim() !== \"\"\n    );\n    if (!ok) continue;\n\n    if (typeof j.spend === \"string\") j.spend = Number(j.spend.replace(/,/g, \"\"));\n    j.rowIndex = row++;\n    out.push({ json: j });\n  }\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1408
+      ],
+      "id": "d65503a0-0f92-4d55-8564-198ebaa79d41",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Flatten + filter Facebook Daily Spend\n * - يتعامل مع items[].json.data[]\n * - يفلتر أي صف ناقص spend/date_start/date_stop\n * - يضيف rowIndex يبدأ من 2\n */\nconst required = [\"spend\", \"date_start\", \"date_stop\"];\n\nlet row = 2;\nconst out = [];\n\nfor (const it of items) {\n  const arr = it?.json?.data;\n  if (!Array.isArray(arr) || arr.length === 0) continue;\n\n  for (const j of arr) {\n    const ok = required.every(k =>\n      j[k] !== undefined && j[k] !== null && String(j[k]).trim() !== \"\"\n    );\n    if (!ok) continue;\n\n    if (typeof j.spend === \"string\") j.spend = Number(j.spend.replace(/,/g, \"\"));\n    j.rowIndex = row++;\n    out.push({ json: j });\n  }\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        1584
+      ],
+      "id": "f4f913fa-4cfb-499e-9e2d-ddd712f0fc0e",
+      "name": "Code5"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v22.0",
+        "node": "={{ $json['Account ID'] }}",
+        "edge": "insights",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "spend,date_start,date_stop,account_id,account_name"
+              }
+            ]
+          },
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "time_range[since]",
+                "value": "={{ $('Code').item.json.startOfMonth }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $('Code').item.json.today }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        1584
+      ],
+      "id": "999e0a9d-3da6-440a-94a8-434632e4ed2b",
+      "name": "Month",
+      "alwaysOutputData": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "x0GIizNGjoBNjkuZ",
+          "name": "Facebook Graph account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Facebook Data Pull —aligomarketing",
+        "limit": 500
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1712,
+        1440
+      ],
+      "id": "a3b4f57b-7f76-49c7-83d7-9257dacea888",
+      "name": "Get many sheet aligomarketing",
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Facebook Data Pull —aligomarketing",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Account name",
+              "condition": "eq",
+              "keyValue": "={{ $json.account_name }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Daily spending",
+              "fieldValue": "={{ $json.spend }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        1408
+      ],
+      "id": "a447deca-955f-49cc-9836-be39f69de0a6",
+      "name": "Update aligomarketing",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Facebook Data Pull —aligomarketing",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Account name",
+              "condition": "eq",
+              "keyValue": "={{ $json.account_name }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Total spent",
+              "fieldValue": "={{ $json.spend }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        1584
+      ],
+      "id": "e2cd7981-84d7-48d7-a297-bc60222c9f8c",
+      "name": "Update aligomarketing 2",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Facebook Data Pull —aligomarketing",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Account ID",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Account name",
+              "fieldValue": "={{ $json.name }}"
+            },
+            {
+              "fieldId": "Status",
+              "fieldValue": "={{ $json.Status }}"
+            },
+            {
+              "fieldId": "Balance",
+              "fieldValue": "={{ $json.balance }}"
+            },
+            {
+              "fieldId": "Date",
+              "fieldValue": "={{ $json.timestamp }}"
+            },
+            {
+              "fieldId": "Available funds",
+              "fieldValue": "={{ $json.funding_source_details.display_string }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        1248
+      ],
+      "id": "766766d3-8620-4381-8db6-be3d173417ad",
+      "name": "Update aligomarketing 3",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "fcb881f0-32cb-4b76-ba22-3c6f49558393",
+      "name": "Split In Batches1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        1072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "__REDACTED_GOOGLE_SHEET_ID__",
+          "mode": "list",
+          "cachedResultName": "Abdo n8n Tracking Spending Targetspro",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1396536384,
+          "mode": "list",
+          "cachedResultName": "aligomarketing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit#gid=1396536384"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Account ID": "={{ $json['Account ID'] }}",
+            "Account name Ads": "={{ $json['Account name'] }}",
+            "Status": "={{ $json.Status }}",
+            "Daily spending": "={{ $json['Daily spending'] }}",
+            "Available funds": "={{ $json['Available funds'] }}",
+            "Date": "={{ $json.Date }}",
+            "Total spent": "={{ $json['Total spent'] }}",
+            "Balance": "={{ $json.Balance }}"
+          },
+          "matchingColumns": [
+            "Account ID"
+          ],
+          "schema": [
+            {
+              "id": "Working",
+              "displayName": "Working",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Account name ",
+              "displayName": "Account name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Account name Ads",
+              "displayName": "Account name Ads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Account ID",
+              "displayName": "Account ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total spent",
+              "displayName": "Total spent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Daily spending",
+              "displayName": "Daily spending",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Available funds",
+              "displayName": "Available funds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Balance",
+              "displayName": "Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "if",
+              "displayName": "if",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client Name",
+              "displayName": "Client Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client number",
+              "displayName": "Client number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Comments",
+              "displayName": "Comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ecomerce",
+              "displayName": "Ecomerce",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "BM access",
+              "displayName": "BM access",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ASSIGNED TO",
+              "displayName": "ASSIGNED TO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        976,
+        1072
+      ],
+      "id": "8ec7e0b1-7c64-4d0f-9ff8-8964c971990e",
+      "name": "Append or update row in sheet6",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lexbktrcyr528ypY",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -2224,
+        1440
+      ],
+      "id": "b404e43b-1f83-4fb1-9741-9acd282168cd",
+      "name": "When Executed by Another Workflow",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1056,
+        1584
+      ],
+      "id": "342f1275-fc37-4885-8da7-30f76821cfcc",
+      "name": "Wait",
+      "webhookId": "8c691fe2-56da-4e7e-bd19-685a25ca1932"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1040,
+        1408
+      ],
+      "id": "d8447983-28d2-4cfb-944a-944f448dfd37",
+      "name": "Wait1",
+      "webhookId": "e8b74e7c-e28f-4109-be5b-ae01143c9bc7"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format amount_spent and balance for readability\nreturn items.map(item => {\n  const data = item.json;\n\n  // معالجة balance\n  let balance = parseFloat(data.balance);\n  if (!isNaN(balance)) {\n    // حوله من micros للجنيه (حسب API)\n    balance = balance / 100; // استخدم 100 أو 10000 حسب تجربتك الواقعية\n    // عرض رقم مقروء بفواصل وعلامتين عشريتين\n    balance = balance.toLocaleString(\"en-US\", {\n      minimumFractionDigits: 2,\n      maximumFractionDigits: 2\n    });\n  }\n\n  // معالجة amount_spent\n  let amount_spent = parseFloat(data.amount_spent);\n  if (!isNaN(amount_spent)) {\n    amount_spent = amount_spent / 100;\n    amount_spent = amount_spent.toLocaleString(\"en-US\", {\n      minimumFractionDigits: 2,\n      maximumFractionDigits: 2\n    });\n  }\n\n  return {\n    json: {\n      ...data,\n      amount_spent,\n      balance\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        1248
+      ],
+      "id": "20d05de7-00c1-4ec7-a593-494031f618d5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Facebook Data Pull —aligomarketing"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        1216
+      ],
+      "id": "094d8b75-6342-4228-93ad-9fc7c5040dd9",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Get many sheet aligomarketing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Graph API5": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Daily Spend1": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code8": {
+      "main": [
+        [
+          {
+            "node": "Update aligomarketing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code9": {
+      "main": [
+        [
+          {
+            "node": "Update aligomarketing 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code=> table": {
+      "main": [
+        [
+          {
+            "node": "Send email2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Filter3.": {
+      "main": [
+        [
+          {
+            "node": "code=> table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet3.": {
+      "main": [
+        []
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status": {
+      "main": [
+        [
+          {
+            "node": "Update aligomarketing 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Code8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Code9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Month": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many sheet aligomarketing": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update aligomarketing 3": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet6": {
+      "main": [
+        []
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Month",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get Daily Spend1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Filter3.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "kxuiZpwsyj2HvuWD"
+  },
+  "versionId": "d023b5ab-3c87-4abe-9d86-c0d8f1cf1e03",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0b355d2ad0c64618c3e71763d60351bce2aa35360a978dd7122af838abfc1a96"
+  },
+  "id": "pDZt5pPx5PCJvvbh",
+  "tags": []
+}

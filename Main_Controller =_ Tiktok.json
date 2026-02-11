@@ -1,0 +1,153 @@
+{
+  "name": "Main_Controller => Tiktok",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ETK8CZgPlpkJ68Uk",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/ETK8CZgPlpkJ68Uk",
+          "cachedResultName": "Tiktok Data Pull —tiktok2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "bc5b3725-dea5-4912-b087-b93887534df7",
+      "name": "Execute Workflow1",
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "nDb5AZDWqMzcH9DS",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/nDb5AZDWqMzcH9DS",
+          "cachedResultName": "Tiktok Data Pull —Tiktok accounts"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {}
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -208,
+        -96
+      ],
+      "id": "bb8f8412-0e5d-47f1-aaac-780116241d37",
+      "name": "Call 'Tiktok Data Pull —Tiktok accounts'",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "e6671aec-fc76-45c6-9f3c-d2d4860c651e",
+      "name": "Wait",
+      "webhookId": "d20d6e25-3a22-4201-a0b6-1def92dcf95b",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -576,
+        -80
+      ],
+      "id": "65a1a803-7105-421b-b79f-d6d36a4fe081",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Call 'Tiktok Data Pull —Tiktok accounts'": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call 'Tiktok Data Pull —Tiktok accounts'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "kxuiZpwsyj2HvuWD"
+  },
+  "versionId": "eaf236b3-461f-4e6d-8511-abeeb0690c89",
+  "meta": {
+    "instanceId": "0b355d2ad0c64618c3e71763d60351bce2aa35360a978dd7122af838abfc1a96"
+  },
+  "id": "wufW98IhKbD24pRE",
+  "tags": []
+}

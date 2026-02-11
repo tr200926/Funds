@@ -1,0 +1,1523 @@
+{
+  "name": "Tiktok Data Pull —tiktok2",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://business-api.tiktok.com/open_api/v1.3/advertiser/info/\n\n",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "advertiser_ids",
+              "value": "=[\"{{ $json.Advertiser_id }}\"]"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Access-Token",
+              "value": "__REDACTED_ROTATE_IN_N8N_CREDENTIALS__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        1024
+      ],
+      "id": "e85c90c5-f9c2-4ae2-b2cd-93302cc2e388",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "__REDACTED_GOOGLE_SHEET_ID__",
+          "mode": "list",
+          "cachedResultName": "Abdo n8n Tracking Spending Targetspro",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1916762489,
+          "mode": "list",
+          "cachedResultName": "tiktok2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit#gid=1916762489"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "=",
+            "Advertiser_id": "={{ $json.id }}",
+            "Account name ": "={{ $json.name }}",
+            "Available funds": "={{ $json.balance }}"
+          },
+          "matchingColumns": [
+            "Advertiser_id"
+          ],
+          "schema": [
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Account name ",
+              "displayName": "Account name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Advertiser_id",
+              "displayName": "Advertiser_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Total spent",
+              "displayName": "Total spent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Daily spending",
+              "displayName": "Daily spending",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Available funds",
+              "displayName": "Available funds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Access",
+              "displayName": "Access",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Comments",
+              "displayName": "Comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1632,
+        1024
+      ],
+      "id": "e0d87f48-7874-48fa-aa8b-b6f1fe9d7628",
+      "name": "Update row in sheet5",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lexbktrcyr528ypY",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9e4d6fc7-672d-479b-a3d0-9959e780292f",
+              "name": "name",
+              "value": "={{ $json.data.list[0].name }}",
+              "type": "string"
+            },
+            {
+              "id": "7057121b-8b83-4b03-98ec-05d922cabab8",
+              "name": "id",
+              "value": "={{ $json.data.list[0].advertiser_id }}",
+              "type": "string"
+            },
+            {
+              "id": "7ee51ac3-a53a-4b00-b88c-a22013d496d2",
+              "name": "balance",
+              "value": "={{ $json.data.list[0].balance }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        1024
+      ],
+      "id": "4f6f9d0f-e0d6-4c38-9056-dc2d2ce0a005",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "__REDACTED_GOOGLE_SHEET_ID__",
+          "mode": "list",
+          "cachedResultName": "Abdo n8n Tracking Spending Targetspro",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1186444346,
+          "mode": "list",
+          "cachedResultName": "tiktok2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit#gid=1186444346"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -64,
+        1024
+      ],
+      "id": "f328daaa-1035-48d3-b741-3d2c533fbbe8",
+      "name": "Get row(s) in sheet5",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lexbktrcyr528ypY",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "122ccead-57b0-4658-8d46-66ea3e97d0ef",
+      "name": "Split In Batches2",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        320,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1040,
+        1024
+      ],
+      "id": "62f18520-31b5-4fc0-a342-f217a4dafac3",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me2",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        1024
+      ],
+      "id": "380e72c9-4d47-40d3-a503-8d6c19fdb0d8"
+    },
+    {
+      "parameters": {
+        "url": "=https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Access-Token",
+              "value": "__REDACTED_ROTATE_IN_N8N_CREDENTIALS__"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"advertiser_id\": \"{{ $json.Advertiser_id }}\", \"report_type\": \"BASIC\", \"data_level\": \"AUCTION_CAMPAIGN\", \"dimensions\": [\"stat_time_day\",\"campaign_id\"], \"metrics\": [\"stat_cost\"], \"start_date\": \"2025-08-01\", \"end_date\":\"2025-08-26\", \"page_size\": 1000 }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2144,
+        1392
+      ],
+      "id": "0c959e73-f3e4-4133-8644-b05aa2e76fe0",
+      "name": "HTTP Request8"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// ===== Helpers =====\nconst num  = v => { const n = parseFloat(v ?? 0); return isNaN(n) ? 0 : n; };\nconst tzFix = d => new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);\n\nconst now = new Date();\nconst monthStart = tzFix(new Date(now.getFullYear(), now.getMonth(), 1));\nconst today      = tzFix(now);\nconst yesterday  = tzFix(new Date(now.getFullYear(), now.getMonth(), now.getDate()-1));\n\n// ===== Get matching row from Sheets safely =====\nlet sheetItems = [];\ntry {\n  // هات كل الآيتيمز من نود الشيت (اسمها بالظبط زي ما ظاهر في النود)\n  sheetItems = $items('Get row(s) in sheet7') || [];\n} catch (e) {\n  sheetItems = [];\n}\n\n// لو عندك نفس عدد العناصر، طابق بالـ $itemIndex، وإلا خُد أول صف كـ fallback\nconst rowFromSheet =\n  (sheetItems[$itemIndex]?.json) ??\n  (sheetItems[0]?.json) ??\n  {};\n\nconst advId = String(\n  rowFromSheet.Advertiser_id ??\n  rowFromSheet.advertiser_id ??\n  ''\n).trim();\n\n// ===== Compute MTD / Yesterday from current HTTP item =====\nconst data = $json.data ?? {};\nlet mtd = 0, y = 0;\n\nif (data.total_metrics) {\n  mtd += num(data.total_metrics.stat_cost ?? data.total_metrics.spend);\n}\n\nconst rows = Array.isArray(data.list) ? data.list : [];\nfor (const r of rows) {\n  const day = (r.dimensions?.stat_time_day || '').slice(0,10);\n  const val = num(r.metrics?.stat_cost ?? r.metrics?.spend);\n  if (!day || day < monthStart || day > today) continue;\n  mtd += val;\n  if (day === yesterday) y += val;\n}\n\n// ===== Output one item =====\nreturn {\n  advertiser_id: advId || 'unknown',\n  mtd_spend: +mtd.toFixed(2),\n  yesterday_spend: +y.toFixed(2),\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2304,
+        1392
+      ],
+      "id": "5ce75c58-7eab-4aef-aa0e-3cd2b7c50f80",
+      "name": "Code7",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "dc7c0134-8ca4-40da-ad3a-166df75fd32d",
+      "name": "Split In Batches3",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        1392
+      ]
+    },
+    {
+      "parameters": {
+        "content": "         tiktok2\n",
+        "height": 176,
+        "width": 214
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -768,
+        1472
+      ],
+      "typeVersion": 1,
+      "id": "db57fdf3-3284-419c-aa4f-27badf4b3c73",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * يضيف rowIndex + timestamp بتوقيت القاهرة\n * timestamp: YYYY-MM-DD  h:mm AM/PM\n */\n\nfunction formatTimestampCairo(date) {\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone: \"Africa/Cairo\",\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hour: \"numeric\",\n    minute: \"2-digit\",\n    hour12: true,\n  }).formatToParts(date);\n\n  const get = type => parts.find(p => p.type === type)?.value || \"\";\n  const year = get(\"year\");\n  const month = get(\"month\");\n  const day = get(\"day\");\n  let hour = get(\"hour\");\n  const minute = get(\"minute\");\n  const dayPeriod = get(\"dayPeriod\"); // AM / PM\n\n  hour = String(parseInt(hour, 10)); // إزالة الصفر من الساعة\n  return `${year}-${month}-${day}  ${hour}:${minute} ${dayPeriod}`;\n}\n\nconst headerOffset = 2; // الصف الأول عناوين\n\nreturn items.map((item, index) => {\n  if (!item.json) item.json = {};\n\n  item.json.rowIndex = index + headerOffset;\n  item.json.timestamp = formatTimestampCairo(new Date());\n\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        1232
+      ],
+      "id": "2621e06d-9745-482f-be88-60c00e4e1f7e",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ae21e9c0-9ecc-432f-91fd-f83b2411d595",
+              "name": "row",
+              "value": "={{ $json.rowIndex }}",
+              "type": "string"
+            },
+            {
+              "id": "d03370a2-0f4a-4a7a-9290-1524ee0f6931",
+              "name": "date",
+              "value": "={{ $json.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "d1ff9411-78f5-4035-9263-4df1a855e23b",
+              "name": "Daily spending(yesterday)",
+              "value": "={{ $json.yesterday_spend }}",
+              "type": "string"
+            },
+            {
+              "id": "a0aece62-b9e2-4783-97ff-1761a9e5a27d",
+              "name": "Total spent(month)",
+              "value": "={{ $json.mtd_spend }}",
+              "type": "string"
+            },
+            {
+              "id": "8ab94790-37a1-4acb-8387-2196adeb5ff9",
+              "name": "id",
+              "value": "={{ $json.advertiser_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3120,
+        1376
+      ],
+      "id": "bb6bfadb-f757-48dc-9b8a-d834859b2e76",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "content": "        code3\nGive\n1- timestamp بتوقيت القاهره\n(2025-08-26 12:05 PM\n\n2- يعطي rowIndex لكل id \n",
+        "height": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1216,
+        1360
+      ],
+      "typeVersion": 1,
+      "id": "4fb4200c-c9f8-4e5a-a9b1-3df1b92b5348",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "url": "=https://business-api.tiktok.com/open_api/v1.3/advertiser/balance/get/\n",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "advertiser_ids",
+              "value": "={{ $json.Advertiser_id }}"
+            },
+            {
+              "name": "bc_id",
+              "value": "={{ $json['BC-ID'] }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Access-Token",
+              "value": "__REDACTED_ROTATE_IN_N8N_CREDENTIALS__"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1584,
+        1840
+      ],
+      "id": "3ea13338-a47e-424c-bb70-c42586df5c81",
+      "name": "HTTP Request10"
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "875bdbe1-5d64-42de-95a3-72484888b318",
+      "name": "Split In Batches6",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        1872
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const list = $json.data?.advertiser_account_list;\n\nif (Array.isArray(list) && list.length) {\n  // عندنا حسابات → رجّع Item لكل حساب\n  return list.map(a => ({\n    json: {\n      id: a.advertiser_id,\n      name: a.advertiser_name,\n      available_funds: a.account_balance,\n    }\n  }));\n}\n\n// مفيش حسابات → ما توقفش الفلو\n// خيار 1: مرّر نفس الـ input للي بعده\nreturn [{ json: $json }];\n\n// أو خيار 2 (بديل): رجّع Placeholder بنفس البنية المتوقعة\n// return [{ json: { id: null, name: null, available_funds: null, _note: 'empty advertiser_account_list', request_id: $json.request_id } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        1856
+      ],
+      "id": "f90d5328-31f3-4b50-9286-fe215e73642d",
+      "name": "Code11"
+    },
+    {
+      "parameters": {
+        "content": "## I'm a note \nAccount name "
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        48,
+        976
+      ],
+      "typeVersion": 1,
+      "id": "606c1740-c321-4829-aeef-7b0a159551ab",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "## I'm a note \nTotal spent , Daily spending"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        48,
+        1280
+      ],
+      "typeVersion": 1,
+      "id": "ec80e27a-aaf3-465f-9bc7-6b11114f0922",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "content": "## I'm a note \nAvailable funds"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        1776
+      ],
+      "typeVersion": 1,
+      "id": "2d816339-20f4-4c26-bfdf-4fdedf724994",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2544,
+        1392
+      ],
+      "id": "4658b9e6-69da-4d08-9dd7-5d5ccaf5c87a",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me3",
+      "typeVersion": 1,
+      "position": [
+        2736,
+        1536
+      ],
+      "id": "10c82783-1454-405d-a6ea-de06c98288d8"
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2288,
+        1856
+      ],
+      "id": "1bd73e4a-454e-4db1-aa49-17d905d07dae",
+      "name": "Loop Over Items5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me5",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        2208
+      ],
+      "id": "ccb9ac77-0029-44ea-8292-03acfc8b5047"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * يضيف rowIndex + timestamp بتوقيت القاهرة\n * timestamp: YYYY-MM-DD  h:mm AM/PM\n */\n\nfunction formatTimestampCairo(date) {\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone: \"Africa/Cairo\",\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hour: \"numeric\",\n    minute: \"2-digit\",\n    hour12: true,\n  }).formatToParts(date);\n\n  const get = type => parts.find(p => p.type === type)?.value || \"\";\n  const year = get(\"year\");\n  const month = get(\"month\");\n  const day = get(\"day\");\n  let hour = get(\"hour\");\n  const minute = get(\"minute\");\n  const dayPeriod = get(\"dayPeriod\"); // AM / PM\n\n  hour = String(parseInt(hour, 10)); // إزالة الصفر من الساعة\n  return `${year}-${month}-${day}  ${hour}:${minute} ${dayPeriod}`;\n}\n\nreturn items.map((item, index) => {\n  if (!item.json) item.json = {};\n\n  // يبدأ من 1 + يضيف كلمة pro\n  item.json.rowIndex = `${index + 1}pro`;\n  item.json.timestamp = formatTimestampCairo(new Date());\n\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2832,
+        1376
+      ],
+      "id": "5c47a0d3-b7d2-4be5-b9a9-1dbe66782792",
+      "name": "Code14"
+    },
+    {
+      "parameters": {
+        "jsCode": "// هات كل الـ items اللي جاية من النود اللي قبلها\nconst items = $input.all();\n\n// فلترة: سيب بس اللي فيهم id موجود و available_funds مش undefined\nlet out = items.filter(i => i.json.id && i.json.available_funds !== undefined);\n\n// (اختياري) لو عايز كمان تشيل اللي رصيده = 0، استخدم السطر ده بدل اللي فوق:\n// let out = items.filter(i => i.json.id && i.json.available_funds !== undefined && i.json.available_funds > 0);\n\n// fallback عشان الـ workflow ما يوقفش لو اتشالوا كلهم\nif (out.length === 0) {\n  // إمّا ترجّع نفس الـ input\n  return items;\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        1840
+      ],
+      "id": "48534d91-456e-4658-89dd-4ba0dc18936c",
+      "name": "Code",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * يضيف rowIndex + timestamp بتوقيت القاهرة\n * timestamp: YYYY-MM-DD  h:mm AM/PM\n */\n\nfunction formatTimestampCairo(date) {\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone: \"Africa/Cairo\",\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hour: \"numeric\",\n    minute: \"2-digit\",\n    hour12: true,\n  }).formatToParts(date);\n\n  const get = type => parts.find(p => p.type === type)?.value || \"\";\n  const year = get(\"year\");\n  const month = get(\"month\");\n  const day = get(\"day\");\n  let hour = get(\"hour\");\n  const minute = get(\"minute\");\n  const dayPeriod = get(\"dayPeriod\"); // AM / PM\n\n  hour = String(parseInt(hour, 10)); // إزالة الصفر من الساعة\n  return `${year}-${month}-${day}  ${hour}:${minute} ${dayPeriod}`;\n}\n\nreturn items.map((item, index) => {\n  if (!item.json) item.json = {};\n\n  // يبدأ من 1 + يضيف كلمة pro\n  item.json.rowIndex = `${index + 1}pro`;\n  item.json.timestamp = formatTimestampCairo(new Date());\n\n  return item;\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2976,
+        1840
+      ],
+      "id": "d430138d-349f-4fb8-bd88-059cd039eeb2",
+      "name": "Code15"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ae21e9c0-9ecc-432f-91fd-f83b2411d595",
+              "name": "row",
+              "value": "={{ $json.rowIndex }}",
+              "type": "string"
+            },
+            {
+              "id": "d03370a2-0f4a-4a7a-9290-1524ee0f6931",
+              "name": "date",
+              "value": "={{ $json.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "b3130f50-389d-427d-b9a2-8f7c4aa41079",
+              "name": "available funds",
+              "value": "={{ $json.available_funds }}",
+              "type": "string"
+            },
+            {
+              "id": "8906cbbd-3f2d-4dfb-8491-b56f9b6bb2a7",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3248,
+        1840
+      ],
+      "id": "192b6008-d4e3-417f-9579-b4ea9bf2f7ea",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "tiktok2",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "row",
+              "condition": "eq",
+              "keyValue": "={{ $json.row }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Total spent",
+              "fieldValue": "={{ $json['Total spent(month)'] }}"
+            },
+            {
+              "fieldId": "Daily spending",
+              "fieldValue": "={{ $json['Daily spending(yesterday)'] }}"
+            },
+            {
+              "fieldId": "Date",
+              "fieldValue": "={{ $json.date }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3424,
+        1376
+      ],
+      "id": "8eedb93d-3bca-488d-9d8b-4e2429886112",
+      "name": "Update a row2",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "tiktok2",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Account name",
+              "condition": "eq",
+              "keyValue": "={{ $json.name }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Date",
+              "fieldValue": "={{ $json.date }}"
+            },
+            {
+              "fieldId": "Available funds",
+              "fieldValue": "={{ $json['available funds'] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3472,
+        1840
+      ],
+      "id": "081d0a1f-0cff-4a73-a5d1-b441f165e7fa",
+      "name": "Update a row5",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tiktok2"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3888,
+        1840
+      ],
+      "id": "47166395-9ea2-484c-b091-435339d7df6f",
+      "name": "Get many rows1",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "maxTries": 2,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "__REDACTED_GOOGLE_SHEET_ID__",
+          "mode": "list",
+          "cachedResultName": "Abdo n8n Tracking Spending Targetspro",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1916762489,
+          "mode": "list",
+          "cachedResultName": "tiktok2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit#gid=1916762489"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Advertiser_id": "={{ $json.Advertiser_id }}",
+            "Total spent": "={{ $json['Total spent'] }}",
+            "Daily spending": "={{ $json['Daily spending'] }}",
+            "Available funds": "={{ $json['Available funds'] }}",
+            "Date": "={{ $json.Date }}"
+          },
+          "matchingColumns": [
+            "Advertiser_id"
+          ],
+          "schema": [
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Account name ",
+              "displayName": "Account name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "BC-ID",
+              "displayName": "BC-ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Advertiser_id",
+              "displayName": "Advertiser_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Total spent",
+              "displayName": "Total spent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Daily spending",
+              "displayName": "Daily spending",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Available funds",
+              "displayName": "Available funds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Access",
+              "displayName": "Access",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Comments",
+              "displayName": "Comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4080,
+        1840
+      ],
+      "id": "9fc42e36-e092-46a4-a991-cb944831911d",
+      "name": "Update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9PUgwh80SUwrYQ0o",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tiktok2",
+        "limit": 500
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        304,
+        1392
+      ],
+      "id": "001c963d-e171-499c-b200-865d33010b68",
+      "name": "Get many rows4",
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tiktok2",
+        "limit": 500
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        288,
+        1872
+      ],
+      "id": "1f6d5952-b4f7-42b4-9c85-ffca39b0ef58",
+      "name": "Get many rows5",
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// 🧩 دالة لاستخراج الرقم من النص (زي \"13pro\" → 13)\nconst extractNumber = (str) => {\n  if (!str) return 0;\n  const match = String(str).match(/\\d+/);\n  return match ? parseInt(match[0]) : 0;\n};\n\n// 🔢 نرتب العناصر حسب الرقم المستخرج من \"row\"\nitems.sort((a, b) => extractNumber(a.json.row) - extractNumber(b.json.row));\n\n// 🎯 نرجع العناصر المرتبة\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        1392
+      ],
+      "id": "21d3edb5-3318-452c-a49d-2dab04c7c21b",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// 🧩 دالة لاستخراج الرقم من النص (زي \"13pro\" → 13)\nconst extractNumber = (str) => {\n  if (!str) return 0;\n  const match = String(str).match(/\\d+/);\n  return match ? parseInt(match[0]) : 0;\n};\n\n// 🔢 نرتب العناصر حسب الرقم المستخرج من \"row\"\nitems.sort((a, b) => extractNumber(a.json.row) - extractNumber(b.json.row));\n\n// 🎯 نرجع العناصر المرتبة\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        1872
+      ],
+      "id": "03c06e77-ac20-4446-b6a2-c10263603f9d",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * تنسيق available_funds لإظهار الفواصل (مثل 55,158)\n */\n\nreturn items.map(item => {\n  const i = item.json;\n\n  if (i.available_funds !== undefined && i.available_funds !== null) {\n    const num = Number(i.available_funds);\n    // تنسيق بدون كسور عشرية\n    i.available_funds = isNaN(num)\n      ? i.available_funds\n      : num.toLocaleString(\"en-US\", {\n          minimumFractionDigits: 0,\n          maximumFractionDigits: 0\n        });\n  }\n\n  return { json: i };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        1856
+      ],
+      "id": "b40f5308-b026-4be8-a707-8e820220616a",
+      "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        1872
+      ],
+      "id": "966bc1f3-7e12-41c9-ab87-7d4857bca3f6",
+      "name": "Wait",
+      "webhookId": "e5671c42-814c-46f2-a701-fa9add632b7d"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -992,
+        1584
+      ],
+      "id": "f9750edd-522c-4112-b500-225975c5d8eb",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3664,
+        1856
+      ],
+      "id": "6e3efc1c-41d5-4759-87f6-a081087240af",
+      "name": "Wait1",
+      "webhookId": "655eb968-1af7-442a-a98f-cb1d14b5ceb7"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1840,
+        1392
+      ],
+      "id": "f475595d-9125-45ff-a46b-c3155253656d",
+      "name": "Wait2",
+      "webhookId": "fe4a8084-9480-4849-9e0d-a750a1787798"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        1392
+      ],
+      "id": "86e9d199-4794-4a61-be73-bcb8b1cf6da3",
+      "name": "Wait3",
+      "webhookId": "0ff40d7e-b87c-4d93-b5bd-6d55b3cdeef5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet5": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update row in sheet5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request8": {
+      "main": [
+        [
+          {
+            "node": "Code7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code7": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches3": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Update a row2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request10": {
+      "main": [
+        [
+          {
+            "node": "Code11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches6": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code11": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code14",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items5": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split In Batches6",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me5": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code14": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Code15",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code15": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Update a row5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row5": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows5": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript6": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get many rows5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get many rows1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Get many rows4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "kxuiZpwsyj2HvuWD"
+  },
+  "versionId": "c76a1f12-7e94-4739-978d-492fa76ab84c",
+  "meta": {
+    "instanceId": "0b355d2ad0c64618c3e71763d60351bce2aa35360a978dd7122af838abfc1a96"
+  },
+  "id": "ETK8CZgPlpkJ68Uk",
+  "tags": []
+}

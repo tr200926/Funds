@@ -1,0 +1,1433 @@
+{
+  "name": "Facebook Data Pull —Main accounts",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// الوقت الحالي بتوقيت القاهرة\nconst now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Cairo' }));\nconst yesterday = new Date(now);\nyesterday.setDate(now.getDate() - 1);\n\n// أول يوم في الشهر\nconst startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);\n\n// تنسيق التاريخ: yyyy-mm-dd\nfunction formatDate(d) {\n  const day = String(d.getDate()).padStart(2, '0');\n  const month = String(d.getMonth() + 1).padStart(2, '0');\n  const year = d.getFullYear();\n  return `${year}-${month}-${day}`;\n}\n\n// تنسيق الوقت: h:mm AM/PM\nfunction formatTime(d) {\n  let hours = d.getHours();\n  const minutes = String(d.getMinutes()).padStart(2, '0');\n  const ampm = hours >= 12 ? 'PM' : 'AM';\n\n  hours = hours % 12;\n  if (hours === 0) hours = 12;\n\n  return `${hours}:${minutes} ${ampm}`;\n}\n\n// nowFormatted بالشكل النهائي: \"2025-08-03   9:22 PM\"\nconst nowFormatted = formatDate(now) + '   ' + formatTime(now);\n\nreturn [\n  {\n    json: {\n      nowFormatted,                         // \"2025-08-03   9:22 PM\"\n      today: formatDate(now),              // \"2025-08-03\"\n      yesterday: formatDate(yesterday),    // \"2025-08-02\"\n      startOfMonth: formatDate(startOfMonth) // \"2025-08-01\"\n    }\n  }\n];\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        208
+      ],
+      "id": "52bb9357-9a54-4971-addd-c1c8796fc4a7",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map(item => {\n  const status = String(item.json.account_status).trim();\n\n  item.json.Status = status === \"1\" ? \"Active\" : \"Inactive\";\n\n  return item;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3968,
+        0
+      ],
+      "id": "a37220f2-a0a9-4bc2-95d8-f95c27eb7ec9",
+      "name": "Code19",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Flatten Facebook API output\n * - يتعامل مع items[].json.data[]\n * - يفلتر أي صف ناقص spend أو account_name\n * - يضيف rowIndex يبدأ من 2\n */\n\nlet row = 2;\nconst out = [];\n\nfor (const item of items) {\n  const arr = item.json?.data;\n  if (!Array.isArray(arr) || arr.length === 0) continue;\n\n  for (const d of arr) {\n    if (!d.spend || !d.account_name) continue; // تجاهل الصفوف الناقصة\n\n    out.push({\n      json: {\n        account_name: d.account_name,\n        account_id: d.account_id || null,\n        spend: Number(d.spend) || 0,\n        date_start: d.date_start || null,\n        date_stop: d.date_stop || null,\n        rowIndex: row++\n      }\n    });\n  }\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3760,
+        272
+      ],
+      "id": "ca9370c8-c22e-418d-b228-16d3dc52af48",
+      "name": "Code20",
+      "retryOnFail": true,
+      "alwaysOutputData": false,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Flatten Facebook API output\n * - يتعامل مع items[].json.data[]\n * - يفلتر أي صف ناقص spend أو account_name\n * - يضيف rowIndex يبدأ من 2\n */\n\nlet row = 2;\nconst out = [];\n\nfor (const item of items) {\n  const arr = item.json?.data;\n  if (!Array.isArray(arr) || arr.length === 0) continue;\n\n  for (const d of arr) {\n    if (!d.spend || !d.account_name) continue; // تجاهل الصفوف الناقصة\n\n    out.push({\n      json: {\n        account_name: d.account_name,\n        account_id: d.account_id || null,\n        spend: Number(d.spend) || 0,\n        date_start: d.date_start || null,\n        date_stop: d.date_stop || null,\n        rowIndex: row++\n      }\n    });\n  }\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3712,
+        592
+      ],
+      "id": "5f41ad46-2dd5-4d8d-9fbe-6518cd812648",
+      "name": "Code21",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "Main accounts",
+        "height": 96
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1360,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "a769f880-7b4f-41a6-a9aa-3bfceae37b5e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const row = item.json;\n\n  // عدل على الأعمدة حسب اسم الشيت بتاعك\n  return row[\"Account name \"] || row[\"Account ID\"] || row[\"Available funds\"] || row[\"Date\"] || row[\"Status\"];\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2368,
+        208
+      ],
+      "id": "851bc932-509e-42d7-90b0-dfb00deea5a2",
+      "name": "Code17"
+    },
+    {
+      "parameters": {
+        "jsCode": "// جدول HTML\nlet html = `\n<p>Dear Team,</p>\n<p>Below are the ad accounts that need funding:</p>\n\n<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;\">\n  <tr>\n    <th>Account name</th>\n    <th>Account ID</th>\n    <th>Available funds</th>\n    <th>Date</th>\n    <th>Status</th>\n  </tr>\n`;\n\n// بيانات الفلاتر (أكاونتات محتاجة تمويل)\nfor (let i = 0; i < items.length; i++) {\n  const row = items[i].json;\n\n  html += `\n    <tr>\n      <td>${row[\"Account name\"] || ''}</td>\n      <td>${row[\"Account ID\"] || ''}</td>\n      <td>${row[\"Available funds\"] || ''}</td>\n      <td>${row[\"Date\"] || ''}</td>\n      <td>${row[\"Status\"] || ''}</td>\n    </tr>\n  `;\n}\n\nhtml += '</table>';\n\n// الإيميلات اللي هتبعتلها\nconst emails = [\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\",\n  \"__REDACTED_EMAIL_SET_IN_CONFIG__\"\n];\n\n// نرجع HTML لكل إيميل\nreturn emails.map(email => {\n  return {\n    json: {\n      email: email,\n      html: html\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5536,
+        -352
+      ],
+      "id": "aa08343d-d40e-4686-84c0-93b9d4e20848",
+      "name": "code=> table2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst hour = now.getUTCHours() + 3; // تعديل للـ timezone\nconst adjustedHour = (hour + 24) % 24; // عشان ما يبقاش أكبر من 23 أو أقل من 0\n\nif (adjustedHour >= 9 && adjustedHour < 12) {\n  return [{ json: { send: true } }];\n} else {\n  return [{ json: { send: false } }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4704,
+        -160
+      ],
+      "id": "a1c74f4d-eeef-4009-89de-1b88c9dbd7c7",
+      "name": "Code25"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7bfe0ffc-8f88-49e4-b7f2-5d599b880db9",
+              "leftValue": "={{ $json.send }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4960,
+        -368
+      ],
+      "id": "3501dbbb-8731-419a-821d-930c389715ef",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  let balanceStr = item.json[\"Available funds\"];\n  const threshold = parseFloat(item.json[\"if\"]);\n\n  if (!balanceStr || isNaN(threshold)) return false;\n\n  // استخراج الرقم من النص حتى لو فيه EGP وأقواس\n  const match = balanceStr.match(/EGP\\s*([\\d,]+\\.\\d{2})/);\n  if (!match) return false;\n\n  const balance = parseFloat(match[1].replace(/,/g, \"\"));\n  if (isNaN(balance)) return false;\n\n  return balance <= threshold;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5392,
+        -368
+      ],
+      "id": "79efbe96-c4a7-46e9-b6d0-602f8d341fce",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17VELaHdBgZsS2GaVv01VajHDJt-kEQxKNFXr860zruk",
+          "mode": "list",
+          "cachedResultName": "Jan26 Report",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17VELaHdBgZsS2GaVv01VajHDJt-kEQxKNFXr860zruk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 931788183,
+          "mode": "list",
+          "cachedResultName": "July-juvenile ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17VELaHdBgZsS2GaVv01VajHDJt-kEQxKNFXr860zruk/edit#gid=931788183"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        5232,
+        -592
+      ],
+      "id": "0427e95d-9e09-4283-bb6d-dc67dc63b8a4",
+      "name": "Get row(s) in sheet1.",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lexbktrcyr528ypY",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "         code=>table   \nThis code generates a styled HTML table showing all ad accounts that require funding, based on filtered input data. It then sends the same table content via email to multiple recipients (__REDACTED_EMAIL_SET_IN_CONFIG__ ,__REDACTED_EMAIL_SET_IN_CONFIG__)",
+        "height": 288,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        4864,
+        -144
+      ],
+      "typeVersion": 1,
+      "id": "36a13258-7d73-413e-8550-d386255debe9",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "fromEmail": "Targetspro info@targetspro.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Urgent: Ad Accounts Need Funding",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        5744,
+        -448
+      ],
+      "id": "03efb09f-50ed-439c-8ed0-9d505659bd90",
+      "name": "Send email",
+      "webhookId": "8428a0b7-e845-47a2-af7e-f78a16dab087",
+      "credentials": {
+        "smtp": {
+          "id": "TweDsn9rC0dnr1Pd",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * يفلتر العناصر الناقصة، ويضيف rowIndex، وtimestamp بتوقيت القاهرة\n * بالصيغة: YYYY-MM-DD  h:mm AM/PM\n */\n\nconst required = [\"name\", \"amount_spent\", \"balance\"];\n\nfunction formatTimestampCairo(date) {\n  const parts = new Intl.DateTimeFormat(\"en-US\", {\n    timeZone: \"Africa/Cairo\",\n    year: \"numeric\",\n    month: \"2-digit\",\n    day: \"2-digit\",\n    hour: \"numeric\",\n    minute: \"2-digit\",\n    hour12: true,\n  }).formatToParts(date);\n\n  const get = type => parts.find(p => p.type === type)?.value || \"\";\n  const year = get(\"year\");\n  const month = get(\"month\");\n  const day = get(\"day\");\n  let hour = get(\"hour\");\n  const minute = get(\"minute\");\n  const dayPeriod = get(\"dayPeriod\"); // AM / PM\n\n  hour = String(parseInt(hour, 10)); // إزالة الصفر من الساعة\n  return `${year}-${month}-${day}  ${hour}:${minute} ${dayPeriod}`;\n}\n\nconst now = new Date();\n\nreturn items\n  // فلترة العناصر الناقصة\n  .filter(item => {\n    const j = item?.json || {};\n    return required.every(k =>\n      Object.prototype.hasOwnProperty.call(j, k) &&\n      j[k] !== undefined &&\n      j[k] !== null &&\n      String(j[k]).trim() !== \"\"\n    );\n  })\n  // إضافة rowIndex + timestamp\n  .map((item, index) => {\n    if (!item.json) item.json = {};\n    if (!item.json.name) item.json.name = \"\";\n\n    item.json.rowIndex = index + 2; // +2 علشان الصف الأول فيه العناوين\n    item.json.timestamp = formatTimestampCairo(now);\n\n    return item;\n  });\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3312,
+        0
+      ],
+      "id": "47071a80-0ed3-48d5-b75f-160988407970",
+      "name": "Code28",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Facebook Data Pull —Main accounts",
+        "limit": 500
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1536,
+        208
+      ],
+      "id": "9f59914b-24df-4561-8b56-530f27059cfb",
+      "name": "Get many rows",
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Facebook Data Pull —Main accounts",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Account ID",
+              "condition": "eq",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Account name",
+              "fieldValue": "={{ $json.name }}"
+            },
+            {
+              "fieldId": "Available funds",
+              "fieldValue": "={{ $json.funding_source_details.display_string }}"
+            },
+            {
+              "fieldId": "Balance",
+              "fieldValue": "={{ $json.balance }}"
+            },
+            {
+              "fieldId": "Date",
+              "fieldValue": "={{ $json.timestamp }}"
+            },
+            {
+              "fieldId": "Status",
+              "fieldValue": "={{ $json.Status }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4224,
+        0
+      ],
+      "id": "e2453dd4-6088-47e7-b2d5-bdc9c4422517",
+      "name": "Update a row4",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Facebook Data Pull —Main accounts",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Account name",
+              "condition": "eq",
+              "keyValue": "={{ $json.account_name }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Daily spending",
+              "fieldValue": "={{ $json.spend }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4096,
+        272
+      ],
+      "id": "a3ee1ede-3a58-49b4-92ff-0da424b72095",
+      "name": "Update a row3",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "Facebook Data Pull —Main accounts",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Account name",
+              "condition": "eq",
+              "keyValue": "={{ $json.account_name }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "Total spent",
+              "fieldValue": "={{ $json.spend }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4096,
+        592
+      ],
+      "id": "08dfa5d3-48df-4c0a-ad49-a23c55f9f911",
+      "name": "Update a row5",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "batchSize": 30,
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "f800df38-7a6c-40cc-8cb6-6b2c3995553b",
+      "name": "Split In Batches1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        208
+      ],
+      "retryOnFail": false,
+      "maxTries": 2,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "__REDACTED_GOOGLE_SHEET_ID__",
+          "mode": "list",
+          "cachedResultName": "Abdo n8n Tracking Spending Targetspro",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Main accounts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/__REDACTED_GOOGLE_SHEET_ID__/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Account ID": "={{ $json['Account ID'] }}",
+            "Account name Ads": "={{ $json['Account name'] }}",
+            "Status": "={{ $json.Status }}",
+            "Daily spending": "={{ $json['Daily spending'] }}",
+            "Available funds": "={{ $json['Available funds'] }}",
+            "Total spent": "={{ $json['Total spent'] }}",
+            "Balance": "={{ $json.Balance }}",
+            "Date": "={{ $json.Date }}"
+          },
+          "matchingColumns": [
+            "Account ID"
+          ],
+          "schema": [
+            {
+              "id": "  ",
+              "displayName": "  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Account name ",
+              "displayName": "Account name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Account name Ads",
+              "displayName": "Account name Ads",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Account ID",
+              "displayName": "Account ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total spent",
+              "displayName": "Total spent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Daily spending",
+              "displayName": "Daily spending",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Available funds",
+              "displayName": "Available funds",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Balance",
+              "displayName": "Balance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "if",
+              "displayName": "if",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Client name",
+              "displayName": "Client name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ecomerce",
+              "displayName": "Ecomerce",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "BM access",
+              "displayName": "BM access",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ASSIGNED TO",
+              "displayName": "ASSIGNED TO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "k",
+              "displayName": "k",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4448,
+        -432
+      ],
+      "id": "d00e4c2a-bf8f-4de4-9cbc-caf3e4bc15c2",
+      "name": "Append or update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lexbktrcyr528ypY",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2752,
+        592
+      ],
+      "id": "0af81caf-aab5-464c-8778-bd984135cc1c",
+      "name": "Wait",
+      "webhookId": "fee5a5c1-dee9-426e-8785-473ecc469b5f"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2736,
+        256
+      ],
+      "id": "da4b45ff-3c8b-4081-b52c-3a95df798df3",
+      "name": "Wait1",
+      "webhookId": "2eb5b0ad-60c8-46a0-a2e0-f98644ef22ae"
+    },
+    {
+      "parameters": {
+        "hostUrl": "=graph.facebook.com",
+        "graphApiVersion": "v22.0",
+        "node": "={{ $json['Account ID'] }}",
+        "edge": "insights",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "spend,date_start,date_stop,account_id,account_name"
+              }
+            ]
+          },
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "time_range[since]",
+                "value": "={{ $('Code').item.json.startOfMonth }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $('Code').item.json.today }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        3536,
+        592
+      ],
+      "id": "02324a30-1ed7-400c-9af5-9d3910054850",
+      "name": "Monthly",
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "x0GIizNGjoBNjkuZ",
+          "name": "Facebook Graph account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "erorr",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2912,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "865f1784-d6ad-4980-b4b2-21e6d2f7cb24",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "erorr",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2880,
+        208
+      ],
+      "typeVersion": 1,
+      "id": "9e38420d-f373-4e06-a653-0b453be9bcbb",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "hostUrl": "=graph.facebook.com",
+        "graphApiVersion": "v22.0",
+        "node": "={{ $json['Account ID'] }}",
+        "edge": "insights",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "spend,date_start,date_stop,account_id,account_name"
+              }
+            ]
+          },
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "time_range[since]",
+                "value": "={{ $('Code').item.json.yesterday }}"
+              },
+              {
+                "name": "time_range[until]",
+                "value": "={{ $('Code').item.json.yesterday }}"
+              }
+            ]
+          },
+          "queryParametersJson": "{\n  \"time_increment\": \"1\",\n  \"level\": \"account\"\n}"
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        3552,
+        272
+      ],
+      "id": "4a63f326-09b2-4d8f-b390-3c1b74533f23",
+      "name": "Get Daily Spend",
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "x0GIizNGjoBNjkuZ",
+          "name": "Facebook Graph account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "45195455-1771-4391-9687-3dd2d3cb4f9a",
+              "leftValue": "={{ $json.batch_status }}",
+              "rightValue": "failed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3488,
+        -192
+      ],
+      "id": "562af37c-b1f0-493d-a603-323a17dc153b",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "tableId": "STATUS WORKFLOWS",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "workflow_name",
+              "fieldValue": "Facebook Data Pull —Main accounts"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.batch_status }}"
+            },
+            {
+              "fieldId": "data",
+              "fieldValue": "={{ $json.timestamp }}"
+            },
+            {
+              "fieldId": "node",
+              "fieldValue": "Facebook Graph API"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3808,
+        -208
+      ],
+      "id": "ec2f73da-055f-4989-b7d8-dcc599f7fc82",
+      "name": "Create a row2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * ✅ Facebook Batch Evaluator (Stable + Verified)\n * الحالة النهائية = failed فقط لو:\n *  - كل الحسابات فشلت (ولا حساب رجّع داتا)\n *  - أو النود فيها مشكلة (token / credential / network)\n */\n\nlet row = 2;\nconst out = [];\n\nlet totalAccounts = 0;\nlet failedAccounts = 0;\nlet successfulAccounts = 0;\nlet nodeLevelError = false;\n\n// 🧩 detectError — تكشف الأخطاء من أي شكل\nfunction detectError(r) {\n  if (!r) return \"Empty response\";\n  const msg = JSON.stringify(r).toLowerCase();\n\n  if (r.error && (r.error.message || r.error.code)) return r.error.message;\n  if (r.body?.error?.message) return r.body.error.message;\n  if (r.statusCode && r.statusCode >= 400) return `HTTP Error ${r.statusCode}`;\n\n  if (\n    msg.includes(\"access token\") ||\n    msg.includes(\"invalid token\") ||\n    msg.includes(\"permission\") ||\n    msg.includes(\"expired\")\n  ) return \"Invalid or expired token\";\n\n  if (msg.includes(\"network\") || msg.includes(\"timeout\")) return \"Network error\";\n  if (msg.includes(\"rate\") || msg.includes(\"limit\")) return \"Rate limit\";\n\n  return null;\n}\n\n// 🌀 loop على كل الحسابات\nfor (const item of items) {\n  const res = item.json || {};\n  totalAccounts++;\n\n  const error = detectError(res);\n  const statusCode = res.statusCode || 200;\n  const data = res.data || [];\n  const accountName = res.account_name || res.name || \"unknown\";\n  const accountId = res.account_id || res.id || null;\n\n  // 🔍 نكتشف لو النود نفسها فيها مشكلة credentials / HTTP / network\n  if (\n    error &&\n    (\n      error.includes(\"token\") ||\n      error.includes(\"OAuth\") ||\n      error.includes(\"credential\") ||\n      error.includes(\"HTTP Error\") ||\n      error.includes(\"network\")\n    )\n  ) {\n    nodeLevelError = true;\n  }\n\n  // ✅ نعتبر الحساب ناجح لو فيه أي spend أو balance أو بيانات صالحة\n  const hasData =\n    (Array.isArray(data) && data.length > 0) ||\n    (res.spend > 0 || res.amount_spent > 0 || res.balance > 0);\n\n  if (hasData && !error) {\n    successfulAccounts++;\n    out.push({\n      json: {\n        account_name: accountName,\n        account_id: accountId,\n        spend: Number(res.spend || res.amount_spent || 0),\n        balance: res.balance || null,\n        rowIndex: row++,\n        status: \"success\",\n      }\n    });\n  } else {\n    failedAccounts++;\n    out.push({\n      json: {\n        account_name: accountName,\n        account_id: accountId,\n        spend: 0,\n        status: \"failed\",\n        error_message: error || `HTTP Error ${statusCode}`,\n        rowIndex: row++,\n      }\n    });\n  }\n}\n\n// ⚙️ منطق القرار النهائي\nlet overallStatus = \"success\";\nif (nodeLevelError || successfulAccounts === 0) {\n  overallStatus = \"failed\";\n}\n\n// 📤 الإخراج النهائي\nreturn [\n  {\n    json: {\n      batch_status: overallStatus,\n      total_accounts: totalAccounts,\n      failed_accounts: failedAccounts,\n      successful_accounts: successfulAccounts,\n      node_error: nodeLevelError,\n      success_rate: ((successfulAccounts / totalAccounts) * 100).toFixed(1) + \"%\",\n      timestamp: new Date().toISOString(),\n      details: out.map(x => x.json)\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3312,
+        -192
+      ],
+      "id": "ac6dd7b6-7374-4adc-9fa1-1be5c2b2f7f8",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "content": "erorr",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2880,
+        -192
+      ],
+      "typeVersion": 1,
+      "id": "56fbe9c5-acae-4e3a-9479-364749308d13",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "graphApiVersion": "v23.0",
+        "node": "={{ $json['Account ID'] }}",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "funding_source_details{display_string}"
+              },
+              {
+                "name": "name"
+              },
+              {
+                "name": "amount_spent"
+              },
+              {
+                "name": "balance"
+              },
+              {
+                "name": "account_status"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        3088,
+        -96
+      ],
+      "id": "3ff0d80e-c715-46fc-baf8-3f8f53260f78",
+      "name": "Facebook Graph API",
+      "retryOnFail": true,
+      "alwaysOutputData": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "x0GIizNGjoBNjkuZ",
+          "name": "Facebook Graph account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * تنسيق spend لإظهار الفواصل (مثل 1,502) بدون كسور عشرية\n */\n\nreturn items.map(item => {\n  const i = item.json;\n\n  if (i.spend !== undefined && i.spend !== null) {\n    const num = Number(i.spend);\n    // تحويل الرقم لفورمات 1,502 بدون كسور\n    i.spend = isNaN(num) ? i.spend : num.toLocaleString(\"en-US\", { \n      minimumFractionDigits: 0, \n      maximumFractionDigits: 0 \n    });\n  }\n\n  return { json: i };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3920,
+        272
+      ],
+      "id": "a5bc54ff-837c-4605-ba74-334f0d3a9449",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * تنسيق spend لإظهار الفواصل (مثل 1,502) بدون كسور عشرية\n */\n\nreturn items.map(item => {\n  const i = item.json;\n\n  if (i.spend !== undefined && i.spend !== null) {\n    const num = Number(i.spend);\n    // تحويل الرقم لفورمات 1,502 بدون كسور\n    i.spend = isNaN(num) ? i.spend : num.toLocaleString(\"en-US\", { \n      minimumFractionDigits: 0, \n      maximumFractionDigits: 0 \n    });\n  }\n\n  return { json: i };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3888,
+        592
+      ],
+      "id": "1ad02c24-9a92-46db-b9a8-f54630664c9f",
+      "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format amount_spent and balance for readability\nreturn items.map(item => {\n  const data = item.json;\n\n  // معالجة balance\n  let balance = parseFloat(data.balance);\n  if (!isNaN(balance)) {\n    // حوله من micros للجنيه (حسب API)\n    balance = balance / 100; // استخدم 100 أو 10000 حسب تجربتك الواقعية\n    // عرض رقم مقروء بفواصل وعلامتين عشريتين\n    balance = balance.toLocaleString(\"en-US\", {\n      minimumFractionDigits: 2,\n      maximumFractionDigits: 2\n    });\n  }\n\n  // معالجة amount_spent\n  let amount_spent = parseFloat(data.amount_spent);\n  if (!isNaN(amount_spent)) {\n    amount_spent = amount_spent / 100;\n    amount_spent = amount_spent.toLocaleString(\"en-US\", {\n      minimumFractionDigits: 2,\n      maximumFractionDigits: 2\n    });\n  }\n\n  return {\n    json: {\n      ...data,\n      amount_spent,\n      balance\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3744,
+        0
+      ],
+      "id": "2ab49676-29b1-4355-9df3-a6ca605b9a6e",
+      "name": "Code in JavaScript5"
+    },
+    {
+      "parameters": {
+        "jsCode": "// الكود ده بيفترض إنك بتستقبل البيانات في متغير items من النود السابق\n// وبيرتبهم حسب الـ id تصاعدياً\n\n// 1️⃣ انسخ الكود كامل\n// 2️⃣ الصقه في خانة JavaScript في النود\n// 3️⃣ شغّل النود\n\nconst sortedItems = items.sort((a, b) => {\n  const idA = Number(a.json.id);\n  const idB = Number(b.json.id);\n  return idA - idB; // لو عايز ترتيب تنازلي استخدم (idB - idA)\n});\n\nreturn sortedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        208
+      ],
+      "id": "3d480555-4f3b-4750-a66d-d989385505ec",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2704,
+        -80
+      ],
+      "id": "cb00833e-5a1b-426b-8f05-66f8c01d32ad",
+      "name": "Wait2",
+      "webhookId": "6631f729-298a-4d79-98fc-0bacd13bb4d5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4080,
+        -224
+      ],
+      "id": "ff89d21f-6a60-4276-aee2-7557a681313d",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        1072,
+        192
+      ],
+      "id": "ca1c3a62-878a-45de-969a-1627f85f7ecf",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4368,
+        592
+      ],
+      "id": "5f2fa5bb-3e10-4517-9292-d5d64ec253d2",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "Facebook Data Pull —Main accounts",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5200,
+        -368
+      ],
+      "id": "a3a1a850-da42-4127-812d-d034d6b82a3e",
+      "name": "Get many rows1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "lFpI1xaNAWw9fNa4",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code19": {
+      "main": [
+        [
+          {
+            "node": "Update a row4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code20": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code21": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code17": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code=> table2": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code25": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Get many rows1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "code=> table2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1.": {
+      "main": [
+        []
+      ]
+    },
+    "Code28": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches1": {
+      "main": [
+        [
+          {
+            "node": "Code17",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row5": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row4": {
+      "main": [
+        [
+          {
+            "node": "Code25",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row3": {
+      "main": [
+        []
+      ]
+    },
+    "Append or update row in sheet2": {
+      "main": [
+        []
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Monthly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get Daily Spend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monthly": {
+      "main": [
+        [
+          {
+            "node": "Code21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Daily Spend": {
+      "main": [
+        [
+          {
+            "node": "Code20",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Graph API": {
+      "main": [
+        [
+          {
+            "node": "Code28",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Update a row3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript6": {
+      "main": [
+        [
+          {
+            "node": "Update a row5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript5": {
+      "main": [
+        [
+          {
+            "node": "Code19",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        []
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows1": {
+      "main": [
+        [
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "kxuiZpwsyj2HvuWD",
+    "availableInMCP": false
+  },
+  "versionId": "d17c1e9a-5643-4af4-afb7-d841c7951045",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0b355d2ad0c64618c3e71763d60351bce2aa35360a978dd7122af838abfc1a96"
+  },
+  "id": "pWzexjnCuwFZnP6X",
+  "tags": []
+}
