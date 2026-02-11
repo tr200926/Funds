@@ -29,17 +29,17 @@
 **Research needed**: Yes — Supabase Vault availability, pg_net extension status, current Supabase CLI migration workflow
 
 ### Phase 2: n8n Pipeline Consolidation
-**Goal**: Replace 8 fragile workflows with 3 robust, parameterized pipelines writing to the new schema
+**Goal**: Replace 8 fragile workflows with 4 robust, parameterized pipelines writing to the new schema
 **Requirements**: R3.1, R3.2, R3.3, R3.4, R3.5, R3.6, R3.7, R3.8
 **Delivers**:
-- 3 consolidated workflows: Controller, Facebook Ingestion (parameterized), TikTok Ingestion (parameterized)
+- 4 consolidated workflows: Controller, Facebook Ingestion (1 API connection serving all 4 BMs), TikTok Ingestion 1, TikTok Ingestion 2 (2 separate API connections)
 - All Facebook calls on Graph API v23.0
 - Error logging to pipeline_runs table
 - Google Sheets dependency eliminated
 - Correct Cairo timezone handling
 - Dual-write validation period (old + new tables)
 - Batch API requests for Facebook
-**Success Criteria**: New 3 workflows produce identical data to old 8 workflows; zero Google Sheets writes; pipeline health logged correctly
+**Success Criteria**: New 4 workflows produce identical data to old 8 workflows; zero Google Sheets writes; pipeline health logged correctly
 **Depends on**: Phase 1
 **Research needed**: Yes — n8n parameterized workflow support, credential selection via expressions, Main accounts disabled investigation
 

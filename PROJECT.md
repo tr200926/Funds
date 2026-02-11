@@ -39,8 +39,8 @@ Build a full monitoring platform with:
 - **n8n instance**: Running 8 workflows (2 controllers + 6 sub-workflows)
 - **Google Sheets**: "Abdo n8n Tracking Spending Targetspro" spreadsheet
 - **Email**: info@targetspro.com SMTP configured
-- **Facebook**: Multiple ad accounts across business managers (Main, Pasant, Aligomarketing, Xlerate)
-- **TikTok**: Multiple advertiser accounts across 2 access tokens
+- **Facebook**: 1 API connection (single token) — serves all 4 business managers (Main, Pasant, Aligomarketing, Xlerate)
+- **TikTok**: 2 API connections (2 separate access tokens) — each covering a different set of advertiser accounts
 
 ## Users
 - **Agency managers** (primary): Monitor all client ad accounts, receive alerts, manage budgets

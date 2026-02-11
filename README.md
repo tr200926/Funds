@@ -47,7 +47,7 @@ An automated platform that:
 - 24/7 alerting (no time-window restrictions)
 
 ### Data Pipelines
-- Consolidated n8n workflows (3 pipelines covering all accounts)
+- Consolidated n8n workflows (4 pipelines: 1 Facebook API + 2 TikTok APIs + controller)
 - Scheduled pulls from Facebook Graph API and TikTok Business API
 - Error handling with pipeline health logging
 - Supabase as single source of truth
@@ -58,11 +58,11 @@ An automated platform that:
 ┌─────────────┐     ┌─────────────────┐     ┌──────────────┐
 │  Facebook    │     │                 │     │   Next.js    │
 │  Graph API   │────▶│    n8n          │────▶│   Dashboard  │
-│              │     │  (Pipelines)    │     │              │
+│  (1 API)     │     │  (Pipelines)    │     │              │
 ├─────────────┤     │                 │     │  - Overview  │
 │  TikTok      │────▶│  Scheduled      │     │  - Details   │
 │  Business    │     │  Data Pulls     │     │  - Alerts    │
-│  API         │     └────────┬────────┘     │  - Health    │
+│  API (x2)    │     └────────┬────────┘     │  - Health    │
 └─────────────┘              │              └──────┬───────┘
                              ▼                     │
                     ┌─────────────────┐            │

@@ -22,7 +22,7 @@
 - **Success Criteria**: All old data migrated to new schema; RLS policies pass security tests; triggers fire correctly on INSERT
 
 ### R3: n8n Pipeline Consolidation
-- **R3.1**: Reduce 8 workflows to 3: one controller, one Facebook ingestion (parameterized), one TikTok ingestion (parameterized)
+- **R3.1**: Reduce 8 workflows to 4: one controller, one Facebook ingestion (1 API connection serving all 4 BMs), two TikTok ingestion workflows (2 separate API connections)
 - **R3.2**: Standardize all Facebook API calls on Graph API v23.0
 - **R3.3**: Proper error handling with logging to pipeline_runs table
 - **R3.4**: Eliminate Google Sheets as data destination (Supabase is single source of truth)
