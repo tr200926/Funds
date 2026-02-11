@@ -49,7 +49,7 @@ begin
     );
 
     perform http_post(
-      'https://n8n-n8n.zvurlz.easypanel.host/webhook/3111c16e-2683-4293-a042-0213ed2c1d86',
+      '__REDACTED_N8N_WEBHOOK_URL__',
       payload::text,
       'application/json'
     );
@@ -147,7 +147,7 @@ begin
 
     -- 🚀 إرسال POST إلى Webhook
     perform http_post(
-      'https://n8n-n8n.zvurlz.easypanel.host/webhook/1c5197ef-29fc-4efa-87ad-46e17a7db328',
+      '__REDACTED_N8N_WEBHOOK_URL__',
       payload::json::text,
       'application/json'
     );
@@ -190,24 +190,3 @@ create trigger on_available_funds_update_tiktok
 after update of "Available funds", "Status"
 on "Tiktok accounts"
 for each row execute function notify_webhook_on_update();
-
-
-
-CREATE TABLE marketing_metrics (
-    id SERIAL PRIMARY KEY,
-    month VARCHAR(10),             -- Jan, Feb, ...
-    total_net_sale NUMERIC,
-    orders INT,
-    spending_facebook NUMERIC,
-    spending_google NUMERIC,
-    total_spending NUMERIC,
-    roas NUMERIC,
-    aov NUMERIC,
-    reached_people INT,
-    conversion_rate NUMERIC,
-    users NUMERIC,
-    frequency NUMERIC,
-    ctr NUMERIC,
-    cpo NUMERIC,
-    created_at TIMESTAMP DEFAULT NOW()
-);

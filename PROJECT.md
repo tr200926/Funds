@@ -32,7 +32,7 @@ Build a full monitoring platform with:
 - **Single-tenant first, multi-tenant ready**: Build for Targetspro now, but use org-scoped data models and abstraction layers so multi-tenancy can be added later
 - **Supabase as single source of truth**: Migrate away from Google Sheets dependency; Supabase handles auth, data, realtime subscriptions, and edge functions
 - **n8n stays as data pipeline**: n8n handles scheduled data pulls; business logic and alerting move to Supabase Edge Functions + Next.js
-- **Timezone**: Africa/Cairo (UTC+3) as default, configurable per user
+- **Timezone**: Africa/Cairo (UTC+2) as default, configurable per user
 
 ## Existing Infrastructure
 - **Supabase instance**: Already has 7+ tables with historical ad data

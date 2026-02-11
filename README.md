@@ -99,9 +99,9 @@ An automated platform that:
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| **Phase 0** | Emergency Security Fixes — rotate tokens, secure credentials | Planned |
+| **Phase 0** | Emergency Security Fixes — rotate tokens, secure credentials | In Progress |
 | **Phase 1** | Database Foundation — normalized schema, RLS, Auth, migration | Planned |
-| **Phase 2** | Pipeline Consolidation — 8 workflows → 3, fix timezone, API v23.0 | Planned |
+| **Phase 2** | Pipeline Consolidation — 8 workflows → 4, fix timezone, API v23.0 | Planned |
 | **Phase 3** | Dashboard MVP — real-time Next.js dashboard with auth | Planned |
 | **Phase 4** | Alert Engine — Email + Telegram, escalation tiers, 24/7 | Planned |
 | **Phase 5** | WhatsApp + Polish — WhatsApp channel, digests, exports | Planned |
@@ -113,9 +113,19 @@ See [ROADMAP.md](ROADMAP.md) for full details.
 ```
 ├── PROJECT.md              # Project vision and architecture decisions
 ├── ROADMAP.md              # Phased build plan
+├── README.md               # This file
+├── database/
+│   └── schema.sql          # Existing Supabase triggers and functions
 ├── .planning/
 │   ├── config.json         # GSD workflow configuration
 │   ├── REQUIREMENTS.md     # Detailed requirements and success criteria
+│   ├── phases/             # Phase-level planning and tracking
+│   │   ├── 00-emergency-security-fixes/
+│   │   ├── 01-database-foundation-schema-migration/
+│   │   ├── 02-n8n-pipeline-consolidation/
+│   │   ├── 03-dashboard-mvp-nextjs/
+│   │   ├── 04-alert-engine-email-telegram/
+│   │   └── 05-whatsapp-integration-polish/
 │   └── research/           # Domain research documents
 │       ├── tech.md         # Tech stack research
 │       ├── architecture.md # System architecture research

@@ -30,7 +30,7 @@
 - **R3.6**: Dual-write period: new workflows write to both old and new tables for validation
 - **R3.7**: Facebook balance conversion verified (cents to currency, factor of 100 for EGP)
 - **R3.8**: Batch API requests where possible (Facebook batch API)
-- **Success Criteria**: 3 workflows produce identical data to 8 old workflows; pipeline_runs table shows healthy status; zero Google Sheets writes
+- **Success Criteria**: 4 workflows produce identical data to 8 old workflows; pipeline_runs table shows healthy status; zero Google Sheets writes
 
 ### R4: Dashboard
 - **R4.1**: Next.js App Router with TypeScript strict mode
