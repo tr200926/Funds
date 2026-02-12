@@ -327,7 +327,7 @@ async function main() {
   console.info(`Totals: ${totalSucceeded}/${totalAccounts} succeeded (${totalFailed} failed)`);
 
   if (totalFailed > 0) {
-    process.exitCode = 1;
+    process.exit(1);
   }
 }
 
