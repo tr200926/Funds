@@ -22,11 +22,12 @@ Plans:
 **Requirements**: R3.1, R3.2, R3.3, R3.4, R3.5, R3.6, R3.7, R3.8
 **Depends on**: Phase 1
 **Plans:** 3 plans
+**Status**: Complete
 
 Plans:
 - [x] 02-01-PLAN.md -- Facebook Ingestion workflow (batch API, balance conversion, pipeline logging, dual-write)
-- [ ] 02-02-PLAN.md -- TikTok Ingestion workflows (2 workflows, separate credentials, per-account processing)
-- [ ] 02-03-PLAN.md -- Controller workflow + Error Handler + system verification checkpoint
+- [x] 02-02-PLAN.md -- TikTok Ingestion workflows (2 workflows, separate credentials, per-account processing)
+- [x] 02-03-PLAN.md -- Controller workflow + Error Handler + system verification checkpoint
 
 ### Phase 3: Dashboard MVP
 **Goal**: Build the real-time web dashboard for monitoring all ad accounts
@@ -57,3 +58,9 @@ Plans:
 **Goal**: Add WhatsApp as alert channel and polish the platform
 **Requirements**: R6.1-R6.3
 **Depends on**: Phase 4
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md -- Database migration (channel type constraint, profile defaults) + dispatch-notifications WhatsApp case + notification formatter
+- [ ] 05-02-PLAN.md -- Dashboard WhatsApp channel config form + per-user opt-in toggle on profile settings
+- [ ] 05-03-PLAN.md -- End-to-end WhatsApp integration verification checkpoint
