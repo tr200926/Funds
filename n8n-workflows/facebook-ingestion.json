@@ -1,0 +1,224 @@
+{
+  "name": "Facebook Ingestion",
+  "active": false,
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Execute Sub-workflow Trigger",
+      "type": "trigger",
+      "inputs": {
+        "org_id": "00000000-0000-0000-0000-000000000001",
+        "pipeline_name": "facebook_ingestion"
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Compute Cairo Dates",
+      "type": "code",
+      "script": "const { DateTime } = require('luxon');\\nconst input = $json;\\nconst cairo = DateTime.now().setZone('Africa/Cairo');\\nconst today = cairo.toFormat('yyyy-MM-dd');\\nconst yesterday = cairo.minus({ days: 1 }).toFormat('yyyy-MM-dd');\\nconst startOfMonth = cairo.startOf('month').toFormat('yyyy-MM-dd');\\nreturn [{ json: { org_id: input.org_id, pipeline_name: input.pipeline_name, today, yesterday, startOfMonth, cairoTimestamp: cairo.toISO() } }];"
+    },
+    {
+      "id": "node-3",
+      "name": "Create Pipeline Run",
+      "type": "supabase.insert",
+      "table": "pipeline_runs",
+      "payload": {
+        "org_id": "={{ $json.org_id }}",
+        "pipeline_name": "={{ $json.pipeline_name }}",
+        "status": "running",
+        "started_at": "={{ new Date().toISOString() }}",
+        "accounts_processed": 0,
+        "accounts_failed": 0,
+        "metadata": {
+          "triggered_by": "controller",
+          "n8n_execution_id": "={{ $execution.id }}"
+        }
+      }
+    },
+    {
+      "id": "node-4",
+      "name": "Fetch Active Facebook Accounts",
+      "type": "supabase.select",
+      "table": "ad_accounts",
+      "filters": {
+        "org_id": "={{ $('Execute Sub-workflow Trigger').item.json.org_id }}",
+        "platform_id": "facebook",
+        "status": "active"
+      }
+    },
+    {
+      "id": "node-5",
+      "name": "Build Account Info Batch",
+      "type": "code",
+      "script": "const accounts = $input.all().map(item => item.json);\\nconst batches = [];\\nfor (let i = 0; i < accounts.length; i += 50) {\\n  const chunk = accounts.slice(i, i + 50).map(account => ({ method: 'GET', relative_url: account.platform_account_id + '?fields=name,balance,amount_spent,account_status,funding_source_details{display_string}' }));\\n  batches.push({ json: { batch: JSON.stringify(chunk) } });\\n}\\nreturn batches;"
+    },
+    {
+      "id": "node-6",
+      "name": "Execute Account Info Batch",
+      "type": "httpRequest",
+      "url": "https://graph.facebook.com/v23.0/",
+      "method": "POST",
+      "body": {
+        "batch": "={{ $json.batch }}",
+        "include_headers": "false"
+      },
+      "options": {
+        "contentType": "application/x-www-form-urlencoded",
+        "continueOnFail": true,
+        "credential": "facebookGraphApi"
+      }
+    },
+    {
+      "id": "node-7",
+      "name": "Build Daily Insights Batch",
+      "type": "code",
+      "script": "const { yesterday } = $('Compute Cairo Dates').first().json;\\nconst accounts = $('Fetch Active Facebook Accounts').all();\\nconst batches = [];\\nfor (let i = 0; i < accounts.length; i += 50) {\\n  const chunk = accounts.slice(i, i + 50).map(item => ({ method: 'GET', relative_url: item.json.platform_account_id + '/insights?fields=spend&time_range={\\\"since\\\":\\\"' + yesterday + '\\\",\\\"until\\\":\\\"' + yesterday + '\\\"}&level=account' }));\\n  batches.push({ json: { batch: JSON.stringify(chunk) } });\\n}\\nreturn batches;"
+    },
+    {
+      "id": "node-8",
+      "name": "Execute Daily Insights Batch",
+      "type": "httpRequest",
+      "url": "https://graph.facebook.com/v23.0/",
+      "method": "POST",
+      "body": {
+        "batch": "={{ $json.batch }}",
+        "include_headers": "false"
+      },
+      "options": {
+        "contentType": "application/x-www-form-urlencoded",
+        "continueOnFail": true,
+        "credential": "facebookGraphApi"
+      }
+    },
+    {
+      "id": "node-9",
+      "name": "Build MTD Insights Batch",
+      "type": "code",
+      "script": "const { startOfMonth, today } = $('Compute Cairo Dates').first().json;\\nconst accounts = $('Fetch Active Facebook Accounts').all();\\nconst batches = [];\\nfor (let i = 0; i < accounts.length; i += 50) {\\n  const chunk = accounts.slice(i, i + 50).map(item => ({ method: 'GET', relative_url: item.json.platform_account_id + '/insights?fields=spend&time_range={\\\"since\\\":\\\"' + startOfMonth + '\\\",\\\"until\\\":\\\"' + today + '\\\"}&level=account' }));\\n  batches.push({ json: { batch: JSON.stringify(chunk) } });\\n}\\nreturn batches;"
+    },
+    {
+      "id": "node-10",
+      "name": "Execute MTD Insights Batch",
+      "type": "httpRequest",
+      "url": "https://graph.facebook.com/v23.0/",
+      "method": "POST",
+      "body": {
+        "batch": "={{ $json.batch }}",
+        "include_headers": "false"
+      },
+      "options": {
+        "contentType": "application/x-www-form-urlencoded",
+        "continueOnFail": true,
+        "credential": "facebookGraphApi"
+      }
+    },
+    {
+      "id": "node-11",
+      "name": "Parse and Normalize Batch Responses",
+      "type": "code",
+      "script": "const pipelineRun = $('Create Pipeline Run').first().json;\\nconst info = $('Execute Account Info Batch').all();\\nconst daily = $('Execute Daily Insights Batch').all();\\nconst mtd = $('Execute MTD Insights Batch').all();\\nconst cairoMeta = $('Compute Cairo Dates').first().json;\\nconst errors = [];\\nconst statusMap = { 1: 'active', 2: 'disabled', 3: 'unsettled', 7: 'pending_risk_review', 8: 'pending_settlement', 9: 'in_grace_period', 100: 'pending_closure', 101: 'closed', 201: 'any_active', 202: 'any_closed' };\\nconst parseBatch = (items) => items.flatMap(item => Array.isArray(item.json) ? item.json : [item.json]).map(row => ({ code: row.code, body: JSON.parse(row.body) }));\\nconst infoParsed = parseBatch(info);\\nconst dailyParsed = parseBatch(daily);\\nconst mtdParsed = parseBatch(mtd);\\nconst accounts = $('Fetch Active Facebook Accounts').all();\\nconst normalized = accounts.map(item => {\\n  const account = item.json;\\n  const infoItem = infoParsed.find(entry => entry.body.id === account.platform_account_id);\\n  const dailyItem = dailyParsed.find(entry => (entry.body.id || entry.body.account_id) === account.platform_account_id);\\n  const mtdItem = mtdParsed.find(entry => (entry.body.id || entry.body.account_id) === account.platform_account_id);\\n  if (!infoItem || infoItem.code !== 200) {\\n    errors.push({ platform_account_id: account.platform_account_id, reason: infoItem ? infoItem.body.error : 'missing account info' });\\n    return null;\\n  }\\n  const infoBody = infoItem.body;\\n  const balance = infoBody.balance ? Number(infoBody.balance) / 100 : null;\\n  const amountSpent = infoBody.amount_spent ? Number(infoBody.amount_spent) / 100 : null;\\n  const dailySpend = dailyItem && dailyItem.code === 200 ? Number(dailyItem.body.data?.[0]?.spend || 0) / 100 : 0;\\n  const mtdSpend = mtdItem && mtdItem.code === 200 ? Number(mtdItem.body.data?.[0]?.spend || 0) / 100 : 0;\\n  return {\\n    org_id: account.org_id,\\n    ad_account_id: account.id,\\n    platform_account_id: account.platform_account_id,\\n    business_manager: account.business_manager,\\n    account_name: infoBody.name,\\n    balance,\\n    amount_spent: amountSpent,\\n    daily_spend: dailySpend,\\n    mtd_spend: mtdSpend,\\n    status: statusMap[infoBody.account_status] || 'unknown',\\n    funding_source: infoBody.funding_source_details?.data?.[0]?.display_string || null,\\n    currency: 'EGP',\\n    date: cairoMeta.today,\\n    captured_at: cairoMeta.cairoTimestamp,\\n    pipeline_run_id: pipelineRun.id,\\n    raw_info: infoBody,\\n    raw_daily: dailyItem ? dailyItem.body : null,\\n    raw_mtd: mtdItem ? mtdItem.body : null\\n  };\\n}).filter(Boolean);\\nreturn [{ json: { results: normalized, errors } }];"
+    },
+    {
+      "id": "node-12",
+      "name": "Split Results",
+      "type": "branch"
+    },
+    {
+      "id": "node-13",
+      "name": "Upsert Spend Records",
+      "type": "supabase.upsert",
+      "table": "spend_records",
+      "conflict": ["ad_account_id", "date"],
+      "payload": {
+        "org_id": "={{ $json.org_id }}",
+        "ad_account_id": "={{ $json.ad_account_id }}",
+        "date": "={{ $json.date }}",
+        "daily_spend": "={{ $json.daily_spend }}",
+        "mtd_spend": "={{ $json.mtd_spend }}",
+        "currency": "EGP",
+        "raw_data": "={{ $json.raw_daily }}",
+        "pipeline_run_id": "={{ $json.pipeline_run_id }}"
+      }
+    },
+    {
+      "id": "node-14",
+      "name": "Insert Balance Snapshots",
+      "type": "supabase.insert",
+      "table": "balance_snapshots",
+      "payload": {
+        "org_id": "={{ $json.org_id }}",
+        "ad_account_id": "={{ $json.ad_account_id }}",
+        "balance": "={{ $json.balance }}",
+        "available_funds": "={{ $json.funding_source }}",
+        "currency": "EGP",
+        "captured_at": "={{ $json.captured_at }}",
+        "pipeline_run_id": "={{ $json.pipeline_run_id }}"
+      }
+    },
+    {
+      "id": "node-15",
+      "name": "Dual-write Legacy Tables",
+      "type": "supabase.upsert",
+      "table": "legacy_facebook_ingestion",
+      "conflict": ["business_manager", "platform_account_id", "date"],
+      "payload": {
+        "business_manager": "={{ $json.business_manager }}",
+        "platform_account_id": "={{ $json.platform_account_id }}",
+        "account_name": "={{ $json.account_name }}",
+        "balance": "={{ $json.balance }}",
+        "daily_spend": "={{ $json.daily_spend }}",
+        "total_spent": "={{ $json.mtd_spend }}",
+        "status": "={{ $json.status }}",
+        "date": "={{ $json.date }}"
+      }
+    },
+    {
+      "id": "node-16",
+      "name": "Aggregate Results",
+      "type": "code",
+      "script": "const payload = $items('Parse and Normalize Batch Responses', 0, 0).json || {};\\nconst success = payload.results || [];\\nconst errors = payload.errors || [];\\nconst status = errors.length === 0 ? 'success' : (success.length > 0 ? 'partial' : 'failed');\\nreturn [{ json: { accounts_processed: success.length, accounts_failed: errors.length, status, error_log: errors } }];"
+    },
+    {
+      "id": "node-17",
+      "name": "Finalize Pipeline Run",
+      "type": "supabase.update",
+      "table": "pipeline_runs",
+      "filters": {
+        "id": "={{ $('Create Pipeline Run').first().json.id }}"
+      },
+      "payload": {
+        "status": "={{ $json.status }}",
+        "completed_at": "={{ new Date().toISOString() }}",
+        "accounts_processed": "={{ $json.accounts_processed }}",
+        "accounts_failed": "={{ $json.accounts_failed }}",
+        "error_log": "={{ $json.error_log }}"
+      }
+    }
+  ],
+  "connections": [
+    {"from": "node-1", "to": "node-2"},
+    {"from": "node-2", "to": "node-3"},
+    {"from": "node-3", "to": "node-4"},
+    {"from": "node-4", "to": "node-5"},
+    {"from": "node-5", "to": "node-6"},
+    {"from": "node-4", "to": "node-7"},
+    {"from": "node-7", "to": "node-8"},
+    {"from": "node-4", "to": "node-9"},
+    {"from": "node-9", "to": "node-10"},
+    {"from": "node-6", "to": "node-11"},
+    {"from": "node-8", "to": "node-11"},
+    {"from": "node-10", "to": "node-11"},
+    {"from": "node-11", "to": "node-12"},
+    {"from": "node-12", "to": "node-13"},
+    {"from": "node-13", "to": "node-14"},
+    {"from": "node-14", "to": "node-15"},
+    {"from": "node-15", "to": "node-16"},
+    {"from": "node-11", "to": "node-16"},
+    {"from": "node-16", "to": "node-17"}
+  ],
+  "settings": {
+    "timezone": "Africa/Cairo",
+    "errorWorkflow": "controller-error-handler",
+    "retryOnFail": false
+  }
+}
