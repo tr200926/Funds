@@ -1,0 +1,809 @@
+{
+  "id": "f6e438f0-a4fd-4d8a-8c22-6e136765a975",
+  "name": "TikTok Ingestion 1",
+  "versionId": "02-02-tiktok-ingestion-1",
+  "active": false,
+  "settings": {
+    "timezone": "Africa/Cairo",
+    "saveExecutionProgress": true,
+    "executionOrder": "v1",
+    "errorWorkflow": "controller-error-handler"
+  },
+  "tags": [
+    "tiktok",
+    "ingestion",
+    "token-group-1"
+  ],
+  "nodes": [
+    {
+      "id": "7b53ae8c-8da2-4181-8d72-24d442f0eb70",
+      "name": "Execute Sub-workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -900,
+        100
+      ],
+      "parameters": {
+        "inputDataMode": "define",
+        "fields": [
+          {
+            "fieldId": "org_id",
+            "fieldLabel": "Organization ID",
+            "fieldType": "string",
+            "required": true,
+            "defaultValue": "00000000-0000-0000-0000-000000000001"
+          },
+          {
+            "fieldId": "pipeline_name",
+            "fieldLabel": "Pipeline Name",
+            "fieldType": "string",
+            "required": true,
+            "defaultValue": "tiktok_ingestion_1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "0a5c3a23-3a0c-4e2d-8f1f-90c8b10ee6cf",
+      "name": "Compute Cairo Dates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        0
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const { DateTime } = require('luxon');\nconst cairo = DateTime.now().setZone('Africa/Cairo');\nconst today = cairo.toFormat('yyyy-MM-dd');\nconst yesterday = cairo.minus({ days: 1 }).toFormat('yyyy-MM-dd');\nconst startOfMonth = cairo.startOf('month').toFormat('yyyy-MM-dd');\nreturn [{ json: { today, yesterday, startOfMonth, cairoTimestamp: cairo.toISO() } }];"
+      }
+    },
+    {
+      "id": "3f3913c1-1a41-4a21-a9a4-0a7a6bd30622",
+      "name": "Create Pipeline Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        120
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "pipeline_runs",
+        "columns": [
+          {
+            "column": "org_id",
+            "value": "={{ $json.org_id }}"
+          },
+          {
+            "column": "pipeline_name",
+            "value": "={{ $json.pipeline_name || 'tiktok_ingestion_1' }}"
+          },
+          {
+            "column": "status",
+            "value": "running"
+          },
+          {
+            "column": "accounts_processed",
+            "value": "0"
+          },
+          {
+            "column": "accounts_failed",
+            "value": "0"
+          },
+          {
+            "column": "metadata",
+            "value": "={{ JSON.stringify({ triggered_by: 'controller', n8n_execution_id: $execution.id }) }}"
+          }
+        ],
+        "returnColumns": "id,status"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "id": "b0fe4768-1db5-4355-b213-a5fa5aa1b1bb",
+      "name": "Fetch Active TikTok Accounts",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        120
+      ],
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "ad_accounts",
+        "returnAll": true,
+        "columns": [
+          "id",
+          "org_id",
+          "platform_id",
+          "platform_account_id",
+          "account_name",
+          "business_manager",
+          "metadata"
+        ],
+        "filters": [
+          {
+            "column": "org_id",
+            "operator": "equals",
+            "value": "={{ $('Execute Sub-workflow Trigger').item.json.org_id }}"
+          },
+          {
+            "column": "platform_id",
+            "operator": "equals",
+            "value": "tiktok"
+          },
+          {
+            "column": "status",
+            "operator": "equals",
+            "value": "active"
+          },
+          {
+            "column": "metadata->>token_group",
+            "operator": "equals",
+            "value": "1"
+          }
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "id": "92e06d5a-8c73-4320-8b32-0d75bce53ccd",
+      "name": "Split Accounts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        60,
+        120
+      ],
+      "parameters": {
+        "batchSize": 1
+      }
+    },
+    {
+      "id": "9a05691b-6e6f-447d-92f5-5c6826e5a49a",
+      "name": "Fetch Advertiser Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        320,
+        -80
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://business-api.tiktok.com/open_api/v1.3/advertiser/info/",
+        "responseFormat": "json",
+        "jsonParameters": false,
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "advertiser_ids",
+              "value": "={{ JSON.stringify([$json.platform_account_id]) }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000,
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "TikTok Token Group 1"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "2c7815ee-082d-48fb-869c-d7ee1694dc65",
+      "name": "Fetch Advertiser Balance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        540,
+        -80
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://business-api.tiktok.com/open_api/v1.3/advertiser/balance/get/",
+        "responseFormat": "json",
+        "jsonParameters": false,
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "advertiser_ids",
+              "value": "={{ $json.platform_account_id }}"
+            },
+            {
+              "name": "bc_id",
+              "value": "={{ $json.metadata?.bc_id || '' }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "TikTok Token Group 1"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "0b89b595-9f94-40e5-b8d3-7fdc545a7f7c",
+      "name": "Fetch Daily Spend Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        760,
+        -80
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/",
+        "responseFormat": "json",
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "advertiser_id",
+              "value": "={{ $json.platform_account_id }}"
+            },
+            {
+              "name": "report_type",
+              "value": "BASIC"
+            },
+            {
+              "name": "data_level",
+              "value": "AUCTION_ADVERTISER"
+            },
+            {
+              "name": "dimensions",
+              "value": "={{ JSON.stringify(['stat_time_day']) }}"
+            },
+            {
+              "name": "metrics",
+              "value": "={{ JSON.stringify(['spend']) }}"
+            },
+            {
+              "name": "start_date",
+              "value": "={{ $('Compute Cairo Dates').item.json.yesterday }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $('Compute Cairo Dates').item.json.yesterday }}"
+            },
+            {
+              "name": "page_size",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "TikTok Token Group 1"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "5f4f012d-9a36-4ae7-8ca6-63a3ddc0a923",
+      "name": "Fetch MTD Spend Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        980,
+        -80
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/",
+        "responseFormat": "json",
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "advertiser_id",
+              "value": "={{ $json.platform_account_id }}"
+            },
+            {
+              "name": "report_type",
+              "value": "BASIC"
+            },
+            {
+              "name": "data_level",
+              "value": "AUCTION_ADVERTISER"
+            },
+            {
+              "name": "dimensions",
+              "value": "={{ JSON.stringify(['stat_time_day']) }}"
+            },
+            {
+              "name": "metrics",
+              "value": "={{ JSON.stringify(['spend']) }}"
+            },
+            {
+              "name": "start_date",
+              "value": "={{ $('Compute Cairo Dates').item.json.startOfMonth }}"
+            },
+            {
+              "name": "end_date",
+              "value": "={{ $('Compute Cairo Dates').item.json.today }}"
+            },
+            {
+              "name": "page_size",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "TikTok Token Group 1"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "fe975e32-4f62-44c7-83d1-3c9bfae29b4c",
+      "name": "Normalize TikTok Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        -80
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const triggerInput = $items('Execute Sub-workflow Trigger', 0, 0)[0].json;\nconst pipelineRun = $items('Create Pipeline Run', 0, 0)[0].json;\nconst dates = $('Compute Cairo Dates').item.json;\nconst account = $json;\nconst info = $('Fetch Advertiser Info').item.json;\nconst balanceResponse = $('Fetch Advertiser Balance').item.json;\nconst dailyReport = $('Fetch Daily Spend Report').item.json;\nconst mtdReport = $('Fetch MTD Spend Report').item.json;\n\nfunction sumSpend(report) {\n  const rows = report?.data?.list || report?.list || [];\n  return rows.reduce((sum, row) => sum + Number(row.spend ?? 0), 0);\n}\n\nconst advertiser = (info?.data?.list || info?.list || [])[0] || {};\nconst balanceEntry = (balanceResponse?.data?.list || balanceResponse?.list || [])[0] || {};\nconst availableFunds = balanceEntry.available_balance_text || balanceEntry.available_balance || null;\nconst result = {\n  org_id: triggerInput.org_id || '00000000-0000-0000-0000-000000000001',\n  ad_account_id: account.id,\n  pipeline_name: triggerInput.pipeline_name || 'tiktok_ingestion_1',\n  pipeline_run_id: pipelineRun.id,\n  platform_account_id: account.platform_account_id,\n  account_name: account.account_name,\n  business_manager: account.business_manager,\n  metadata: account.metadata || {},\n  cairo_date: dates.today,\n  cairo_timestamp: dates.cairoTimestamp,\n  status: advertiser.status === 'STATUS_ENABLE' ? 'active' : 'disabled',\n  balance: Number(balanceEntry.balance ?? 0),\n  available_funds: availableFunds,\n  daily_spend: sumSpend(dailyReport),\n  mtd_spend: sumSpend(mtdReport),\n  raw_data: { advertiser_info: info, balance_response: balanceResponse, daily_report: dailyReport, mtd_report: mtdReport },\n  success: true,\n  error: null\n};\n\nconst encounteredErrors = [];\nif (info?.error || info?.code >= 400) {\n  encounteredErrors.push(`Advertiser info error: ${info?.error?.message || info?.message || info?.code}`);\n}\nif (balanceResponse?.error || balanceResponse?.code >= 400) {\n  encounteredErrors.push(`Balance error: ${balanceResponse?.error?.message || balanceResponse?.message || balanceResponse?.code}`);\n}\nif (dailyReport?.error || dailyReport?.code >= 400) {\n  encounteredErrors.push(`Daily spend error: ${dailyReport?.error?.message || dailyReport?.message || dailyReport?.code}`);\n}\nif (mtdReport?.error || mtdReport?.code >= 400) {\n  encounteredErrors.push(`MTD spend error: ${mtdReport?.error?.message || mtdReport?.message || mtdReport?.code}`);\n}\n\nif (!account.id) {\n  encounteredErrors.push('Missing ad_account_id from Supabase fetch.');\n}\n\nif (encounteredErrors.length) {\n  result.success = false;\n  result.error = encounteredErrors.join(' | ');\n}\n\nreturn [{ json: result }];"
+      }
+    },
+    {
+      "id": "4b5c2313-0e53-46b7-97d8-9af1ea46b9c1",
+      "name": "Success Branch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        -80
+      ],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.success }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "df6d04f0-2813-4a56-8c63-62c38b615ef0",
+      "name": "Upsert spend_records",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1660,
+        -200
+      ],
+      "parameters": {
+        "operation": "upsert",
+        "schema": "public",
+        "table": "spend_records",
+        "onConflict": "ad_account_id,date",
+        "columns": [
+          {
+            "column": "org_id",
+            "value": "={{ $json.org_id }}"
+          },
+          {
+            "column": "ad_account_id",
+            "value": "={{ $json.ad_account_id }}"
+          },
+          {
+            "column": "date",
+            "value": "={{ $json.cairo_date }}"
+          },
+          {
+            "column": "daily_spend",
+            "value": "={{ $json.daily_spend }}"
+          },
+          {
+            "column": "mtd_spend",
+            "value": "={{ $json.mtd_spend }}"
+          },
+          {
+            "column": "currency",
+            "value": "EGP"
+          },
+          {
+            "column": "raw_data",
+            "value": "={{ JSON.stringify($json.raw_data) }}"
+          },
+          {
+            "column": "pipeline_run_id",
+            "value": "={{ $json.pipeline_run_id }}"
+          }
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "id": "2ccbfc55-23a0-45a9-8c5b-242fe834f94f",
+      "name": "Insert balance_snapshots",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        -80
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "balance_snapshots",
+        "columns": [
+          {
+            "column": "org_id",
+            "value": "={{ $json.org_id }}"
+          },
+          {
+            "column": "ad_account_id",
+            "value": "={{ $json.ad_account_id }}"
+          },
+          {
+            "column": "balance",
+            "value": "={{ $json.balance }}"
+          },
+          {
+            "column": "available_funds",
+            "value": "={{ $json.available_funds }}"
+          },
+          {
+            "column": "currency",
+            "value": "EGP"
+          },
+          {
+            "column": "captured_at",
+            "value": "={{ $json.cairo_timestamp }}"
+          },
+          {
+            "column": "pipeline_run_id",
+            "value": "={{ $json.pipeline_run_id }}"
+          }
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "id": "e29e69a7-4f53-4758-aabe-2e0e778052d9",
+      "name": "Update Legacy TikTok Table",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        100
+      ],
+      "parameters": {
+        "operation": "upsert",
+        "schema": "public",
+        "table": "Tiktok accounts",
+        "onConflict": "Advertiser_id",
+        "columns": [
+          {
+            "column": "Advertiser_id",
+            "value": "={{ $json.platform_account_id }}"
+          },
+          {
+            "column": "Advertiser name",
+            "value": "={{ $json.account_name }}"
+          },
+          {
+            "column": "Available funds",
+            "value": "={{ $json.available_funds || '' }}"
+          },
+          {
+            "column": "Daily spending",
+            "value": "={{ $json.daily_spend }}"
+          },
+          {
+            "column": "Status",
+            "value": "={{ $json.status }}"
+          },
+          {
+            "column": "BC-ID",
+            "value": "={{ $json.metadata?.bc_id || null }}"
+          },
+          {
+            "column": "pipeline_run_id",
+            "value": "={{ $json.pipeline_run_id }}"
+          },
+          {
+            "column": "updated_at",
+            "value": "={{ $json.cairo_timestamp }}"
+          }
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "id": "306493c2-6112-456d-a1aa-fbe947ab51cd",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        360
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const pipelineRun = $items('Create Pipeline Run', 0, 0)[0].json;\nconst processed = $items('Normalize TikTok Data', 0, 0);\nlet accountsProcessed = 0;\nlet accountsFailed = 0;\nconst errorLog = {};\n\nfor (const item of processed) {\n  if (!item) continue;\n  const payload = item.json;\n  if (payload.success) {\n    accountsProcessed += 1;\n  } else {\n    accountsFailed += 1;\n    const key = payload.platform_account_id || payload.ad_account_id || `unknown-${accountsFailed}`;\n    errorLog[key] = payload.error || 'Unknown error';\n  }\n}\n\nconst status = accountsFailed === 0 ? 'success' : (accountsProcessed > 0 ? 'partial' : 'failed');\nreturn [{ json: { pipeline_run_id: pipelineRun.id, status, accounts_processed: accountsProcessed, accounts_failed: accountsFailed, error_log: Object.keys(errorLog).length ? errorLog : null } }];"
+      }
+    },
+    {
+      "id": "e9f73d0e-9b42-4b3f-9444-8fd2d53b6d81",
+      "name": "Finalize Pipeline Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        480,
+        360
+      ],
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "pipeline_runs",
+        "filters": [
+          {
+            "column": "id",
+            "operator": "equals",
+            "value": "={{ $json.pipeline_run_id }}"
+          }
+        ],
+        "columns": [
+          {
+            "column": "status",
+            "value": "={{ $json.status }}"
+          },
+          {
+            "column": "completed_at",
+            "value": "={{ $now.toISO() }}"
+          },
+          {
+            "column": "accounts_processed",
+            "value": "={{ $json.accounts_processed }}"
+          },
+          {
+            "column": "accounts_failed",
+            "value": "={{ $json.accounts_failed }}"
+          },
+          {
+            "column": "error_log",
+            "value": "={{ JSON.stringify($json.error_log) }}"
+          }
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Execute Sub-workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Compute Cairo Dates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Pipeline Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Cairo Dates": {
+      "main": [
+        [
+          {
+            "node": "Create Pipeline Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Pipeline Run": {
+      "main": [
+        [
+          {
+            "node": "Fetch Active TikTok Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Active TikTok Accounts": {
+      "main": [
+        [
+          {
+            "node": "Split Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Accounts": {
+      "main": [
+        [
+          {
+            "node": "Fetch Advertiser Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Advertiser Info": {
+      "main": [
+        [
+          {
+            "node": "Fetch Advertiser Balance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Advertiser Balance": {
+      "main": [
+        [
+          {
+            "node": "Fetch Daily Spend Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Daily Spend Report": {
+      "main": [
+        [
+          {
+            "node": "Fetch MTD Spend Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch MTD Spend Report": {
+      "main": [
+        [
+          {
+            "node": "Normalize TikTok Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize TikTok Data": {
+      "main": [
+        [
+          {
+            "node": "Success Branch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success Branch?": {
+      "main": [
+        [
+          {
+            "node": "Upsert spend_records",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert spend_records": {
+      "main": [
+        [
+          {
+            "node": "Insert balance_snapshots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert balance_snapshots": {
+      "main": [
+        [
+          {
+            "node": "Update Legacy TikTok Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Legacy TikTok Table": {
+      "main": [
+        [
+          {
+            "node": "Split Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "Finalize Pipeline Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
