@@ -1,0 +1,32 @@
+{
+  "name": "funds-project",
+  "version": "1.0.0",
+  "description": "A full-stack monitoring platform that provides real-time visibility into ad spend across Facebook and TikTok, with predictive alerting, multi-channel notifications, and a web dashboard.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "migrate": "tsx scripts/migrate_legacy_data.ts",
+    "migrate:dry-run": "tsx scripts/migrate_legacy_data.ts --dry-run",
+    "db:reset": "npx supabase db reset --local --no-seed",
+    "db:types": "npx supabase gen types typescript --local > lib/database.types.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tr200926/Funds.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tr200926/Funds/issues"
+  },
+  "homepage": "https://github.com/tr200926/Funds#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "dotenv": "^17.2.4",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3"
+  }
+}
