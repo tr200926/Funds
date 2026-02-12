@@ -1,0 +1,299 @@
+{
+  "id": "7df34e8c-7a70-44fc-a6b3-6e7d1f58d9f2",
+  "name": "Controller Workflow",
+  "versionId": "02-03-controller",
+  "active": false,
+  "settings": {
+    "timezone": "Africa/Cairo",
+    "errorWorkflow": "controller-error-handler",
+    "saveExecutionProgress": true
+  },
+  "tags": [
+    "controller",
+    "ingestion"
+  ],
+  "nodes": [
+    {
+      "id": "3b3f26b3-3f9e-4c71-9c6c-1f620fb1951a",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -1260,
+        0
+      ],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "custom": {
+                "cronExpression": "0 */3 * * *"
+              }
+            }
+          ]
+        }
+      },
+      "options": {
+        "timezone": "Africa/Cairo"
+      }
+    },
+    {
+      "id": "5ac0f7a9-9f0e-4f9e-87b8-b7b76eb33b75",
+      "name": "Create Controller Pipeline Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        0
+      ],
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "pipeline_runs",
+        "columns": [
+          {
+            "column": "org_id",
+            "value": "00000000-0000-0000-0000-000000000001"
+          },
+          {
+            "column": "pipeline_name",
+            "value": "controller"
+          },
+          {
+            "column": "status",
+            "value": "running"
+          },
+          {
+            "column": "started_at",
+            "value": "={{ $now.toISO() }}"
+          },
+          {
+            "column": "accounts_processed",
+            "value": "0"
+          },
+          {
+            "column": "accounts_failed",
+            "value": "0"
+          },
+          {
+            "column": "metadata",
+            "value": "={{ JSON.stringify({ n8n_execution_id: $execution.id, sub_workflows: ['facebook_ingestion', 'tiktok_ingestion_1', 'tiktok_ingestion_2'] }) }}"
+          }
+        ],
+        "returnColumns": "id,status,metadata"
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "id": "b6217ef5-759d-4f70-a2b7-2c1f629dc9d5",
+      "name": "Execute Facebook Ingestion",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -160
+      ],
+      "parameters": {
+        "workflowId": "REPLACE_FACEBOOK_WORKFLOW_ID",
+        "options": {
+          "waitForSubWorkflow": true,
+          "inputData": [
+            {
+              "json": {
+                "org_id": "00000000-0000-0000-0000-000000000001",
+                "pipeline_name": "facebook_ingestion"
+              }
+            }
+          ]
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "8d2fe369-d8de-4b42-b66e-24c5201e2570",
+      "name": "Execute TikTok Ingestion 1",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        0
+      ],
+      "parameters": {
+        "workflowId": "REPLACE_TIKTOK_INGESTION_1_ID",
+        "options": {
+          "waitForSubWorkflow": true,
+          "inputData": [
+            {
+              "json": {
+                "org_id": "00000000-0000-0000-0000-000000000001",
+                "pipeline_name": "tiktok_ingestion_1"
+              }
+            }
+          ]
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "dabc5c7d-8b17-4a14-a386-5094595fea0e",
+      "name": "Execute TikTok Ingestion 2",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        160
+      ],
+      "parameters": {
+        "workflowId": "REPLACE_TIKTOK_INGESTION_2_ID",
+        "options": {
+          "waitForSubWorkflow": true,
+          "inputData": [
+            {
+              "json": {
+                "org_id": "00000000-0000-0000-0000-000000000001",
+                "pipeline_name": "tiktok_ingestion_2"
+              }
+            }
+          ]
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "id": "9646a861-b9ef-4fa7-aa74-00ce5f7ad632",
+      "name": "Aggregate Sub-workflow Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        0
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const pipelineRun = $items('Create Controller Pipeline Run', 0, 0)[0]?.json || {};\nconst subWorkflows = [\n  { key: 'facebook', node: 'Execute Facebook Ingestion', pipeline: 'facebook_ingestion' },\n  { key: 'tiktok_1', node: 'Execute TikTok Ingestion 1', pipeline: 'tiktok_ingestion_1' },\n  { key: 'tiktok_2', node: 'Execute TikTok Ingestion 2', pipeline: 'tiktok_ingestion_2' },\n];\nconst summary = {};\nlet accountsProcessed = 0;\nlet accountsFailed = 0;\nlet successes = 0;\nfor (const entry of subWorkflows) {\n  const nodeItems = $items(entry.node, 0, 0);\n  const payload = nodeItems?.[0]?.json || {};\n  const normalized = payload.data?.[0] || payload;\n  const status = (normalized.status || (payload.error ? 'failed' : 'unknown')).toLowerCase();\n  const processed = Number(normalized.accounts_processed ?? normalized.accountsProcessed ?? 0);\n  const failed = Number(normalized.accounts_failed ?? normalized.accountsFailed ?? (payload.error ? 1 : 0));\n  if (status === 'success') {\n    successes += 1;\n  }\n  accountsProcessed += processed;\n  accountsFailed += failed;\n  summary[entry.key] = {\n    workflow: entry.pipeline,\n    status: status || 'unknown',\n    pipeline_run_id: normalized.pipeline_run_id || normalized.id || null,\n    accounts_processed: processed,\n    accounts_failed: failed,\n    error: payload.error || null,\n  };\n}\nlet controllerStatus = 'failed';\nif (accountsFailed === 0 && successes === subWorkflows.length) {\n  controllerStatus = 'success';\n} else if (accountsProcessed > 0 || successes > 0) {\n  controllerStatus = 'partial';\n}\nreturn [{\n  json: {\n    controller_pipeline_run_id: pipelineRun.id,\n    status: controllerStatus,\n    accounts_processed: accountsProcessed,\n    accounts_failed: accountsFailed,\n    summary,\n  },\n}];"
+      }
+    },
+    {
+      "id": "2d70e6aa-5dbd-4ee8-b1ee-0c9bfc1d9989",
+      "name": "Finalize Controller Pipeline Run",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        340,
+        0
+      ],
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "pipeline_runs",
+        "filters": [
+          {
+            "column": "id",
+            "operator": "equals",
+            "value": "={{ $json.controller_pipeline_run_id }}"
+          }
+        ],
+        "columns": [
+          {
+            "column": "status",
+            "value": "={{ $json.status }}"
+          },
+          {
+            "column": "completed_at",
+            "value": "={{ $now.toISO() }}"
+          },
+          {
+            "column": "accounts_processed",
+            "value": "={{ $json.accounts_processed }}"
+          },
+          {
+            "column": "accounts_failed",
+            "value": "={{ $json.accounts_failed }}"
+          },
+          {
+            "column": "metadata",
+            "value": "={{ JSON.stringify({ n8n_execution_id: $execution.id, sub_workflows: ['facebook_ingestion','tiktok_ingestion_1','tiktok_ingestion_2'], sub_workflow_summary: $json.summary }) }}"
+          }
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Create Controller Pipeline Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Controller Pipeline Run": {
+      "main": [
+        [
+          {
+            "node": "Execute Facebook Ingestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Facebook Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Execute TikTok Ingestion 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute TikTok Ingestion 1": {
+      "main": [
+        [
+          {
+            "node": "Execute TikTok Ingestion 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute TikTok Ingestion 2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Sub-workflow Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Sub-workflow Results": {
+      "main": [
+        [
+          {
+            "node": "Finalize Controller Pipeline Run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "id": "f69c3a65-8dcf-4e28-9ce2-91faefba420c",
+  "name": "Controller Error Handler",
+  "versionId": "02-03-error-handler",
+  "active": true,
+  "settings": {
+    "timezone": "Africa/Cairo",
+    "saveExecutionProgress": true
+  },
+  "tags": [
+    "error-handler",
+    "controller"
+  ],
+  "nodes": [
+    {
+      "id": "0c4a5f9f-19f2-4d73-8d3e-60d1aeb40a06",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -900,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "7c74dd8f-a4bf-4d58-927f-4bcf1cb4a1b9",
+      "name": "Extract Failure Info",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        0
+      ],
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const event = $input.first().json || {};\nconst { DateTime } = require('luxon');\nconst timestamp = DateTime.now().setZone('Africa/Cairo').toISO();\nreturn [{\n  json: {\n    workflow_id: event.workflow?.id || null,\n    workflow_name: event.workflow?.name || null,\n    execution_id: event.execution?.id || null,\n    error_message: event.error?.message || event.error?.description || event.error || 'Unknown error',\n    raw_error: event.error || null,\n    timestamp,\n  }\n}];"
+      }
+    },
+    {
+      "id": "2eb32cd5-7e4e-4bbc-bc21-0b8d52eab2f1",
+      "name": "Find Stuck Pipeline Runs",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        0
+      ],
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "pipeline_runs",
+        "returnAll": true,
+        "filters": [
+          {
+            "column": "status",
+            "operator": "equals",
+            "value": "running"
+          },
+          {
+            "column": "started_at",
+            "operator": "lt",
+            "value": "={{ $now.minus({ minutes: 30 }).toISO() }}"
+          }
+        ],
+        "columns": [
+          "id",
+          "metadata",
+          "pipeline_name",
+          "org_id"
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    },
+    {
+      "id": "f5ec5457-6f02-461c-938c-a7728d9f9cf1",
+      "name": "Mark Failed Pipeline Runs",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "pipeline_runs",
+        "filters": [
+          {
+            "column": "id",
+            "operator": "equals",
+            "value": "={{ $json.id }}"
+          }
+        ],
+        "columns": [
+          {
+            "column": "status",
+            "value": "failed"
+          },
+          {
+            "column": "completed_at",
+            "value": "={{ $now.toISO() }}"
+          },
+          {
+            "column": "error_log",
+            "value": "={{ JSON.stringify(Object.assign({}, $json.error_log || {}, { unhandled_crash: true, workflow_id: $items('Extract Failure Info',0,0)[0].json.workflow_id, workflow_name: $items('Extract Failure Info',0,0)[0].json.workflow_name, execution_id: $items('Extract Failure Info',0,0)[0].json.execution_id, error_message: $items('Extract Failure Info',0,0)[0].json.error_message, reported_at: $items('Extract Failure Info',0,0)[0].json.timestamp })) }}"
+          }
+        ]
+      },
+      "credentials": {
+        "supabaseApi": {
+          "name": "Supabase Service Role"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Failure Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Failure Info": {
+      "main": [
+        [
+          {
+            "node": "Find Stuck Pipeline Runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Stuck Pipeline Runs": {
+      "main": [
+        [
+          {
+            "node": "Mark Failed Pipeline Runs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
