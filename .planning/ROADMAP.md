@@ -25,7 +25,7 @@ Plans:
 
 Plans:
 - [ ] 02-01-PLAN.md -- Facebook Ingestion workflow (batch API, balance conversion, pipeline logging, dual-write)
-- [ ] 02-02-PLAN.md -- TikTok Ingestion workflows (2 workflows, separate credentials, per-account processing)
+- [x] 02-02-PLAN.md -- TikTok Ingestion workflows (2 workflows, separate credentials, per-account processing)
 - [ ] 02-03-PLAN.md -- Controller workflow + Error Handler + system verification checkpoint
 
 ### Phase 3: Dashboard MVP
