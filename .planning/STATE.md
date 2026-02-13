@@ -4,10 +4,10 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Current Plan Progress
 
-- **Latest Phase:** 04-alert-engine-email-telegram
-- **Latest Plan:** 02 (Edge Functions) -- completed 2026-02-13. Three Supabase Edge Functions: evaluate-alerts (trigger->rules->cooldown->alert->dispatch), dispatch-notifications (email via Resend + Telegram Bot API), escalate-alerts (severity promotion for unacknowledged alerts).
-- **Completed Plans:** 04-01 (DB triggers + shared code), 04-02 (Edge Functions), 04-03 (Alert rules UI), 04-04 (Alert history + channels UI)
-- **Next Steps:** Execute Phase 04 Plan 05 (E2E verification checkpoint).
+- **Latest Phase:** 05-whatsapp-integration-polish
+- **Latest Plan:** 01 (WhatsApp Backend Foundation) -- completed 2026-02-13. Schema guardrails (CHECK constraint on notification_channels.channel_type), formatAlertWhatsAppParams formatter, sendWhatsApp + dispatchWhatsApp in dispatch-notifications Edge Function with per-user opt-in enforcement.
+- **Completed Plans:** 04-01 (DB triggers + shared code), 04-02 (Edge Functions), 04-03 (Alert rules UI), 04-04 (Alert history + channels UI), 05-01 (WhatsApp backend foundation)
+- **Next Steps:** Execute Phase 05 Plan 02 (WhatsApp channel configuration UI) and Plan 03 (user profile opt-in toggle).
 
 ## Decisions Recorded
 
@@ -33,6 +33,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 20. Refetch full alert list on realtime INSERT because Supabase realtime payload lacks joined relations.
 21. Display notification channels as cards (not DataTable) since channels are typically few items with rich visual density needs.
 22. Use controlled React state for channel form instead of react-hook-form to handle dynamic email/telegram config fields cleanly.
+23. WhatsApp channels store recipients as Array<{ phone, user_id }> to support per-user opt-in verification before every dispatch.
+24. Template selection uses severity-based mapping: critical/emergency -> critical_alert, all others -> balance_warning.
+25. dispatchWhatsApp handles its own delivery logging per recipient rather than using the shared single-delivery path, because WhatsApp requires per-recipient opt-in checks.
 
 ## Issues / Blockers
 
@@ -41,4 +44,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 04 Plans 01-04 on 2026-02-13. Wave 1 (04-01, 04-03, 04-04) ran in parallel: DB triggers + shared modules, alert rules UI, alert history + channels. Wave 2 (04-02) built directly: 3 Edge Functions for evaluate/dispatch/escalate. Ready for 04-05 verification checkpoint.
+- **Last Work Session:** Completed Phase 05 Plan 01 on 2026-02-13. WhatsApp backend foundation: schema migration with CHECK constraint + partial index, formatAlertWhatsAppParams formatter, sendWhatsApp + dispatchWhatsApp in dispatch-notifications with per-user opt-in enforcement. 2 tasks, 3 files, 2 commits.
