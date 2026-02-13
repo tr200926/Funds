@@ -5,8 +5,8 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 ## Current Plan Progress
 
 - **Latest Phase:** 04-alert-engine-email-telegram
-- **Latest Plan:** 01 (Alert engine foundation: triggers + shared modules) -- completed 2026-02-13. pg_net triggers on spend_records/balance_snapshots INSERT, status change trigger, cooldown RPC, pg_cron escalation, and 5 shared TypeScript modules for Edge Functions.
-- **Next Steps:** Execute Phase 04 Plan 02 (evaluate-alerts Edge Function).
+- **Latest Plan:** 03 (Alert rules UI: Zod validators, form, list, management page) -- completed 2026-02-13. Zod schemas for all 5 rule type configs, AlertRuleForm with dynamic config fields, AlertRuleList with CRUD and toggle, /alerts/rules page with role-based access.
+- **Next Steps:** Execute Phase 04 Plan 04 (alert history UI) or Plan 02 (evaluate-alerts Edge Function).
 
 ## Decisions Recorded
 
@@ -25,6 +25,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 13. Account status change uses a separate trigger with WHEN (OLD.status IS DISTINCT FROM NEW.status) guard rather than evaluating in the generic trigger.
 14. time_to_depletion evaluator tries the database RPC first, then falls back to manual balance/avg-spend calculation from spend_records.
 15. Quiet hours use per-channel configurable timezone (not hardcoded to Cairo) with midnight-wrapping window support.
+16. Use untyped useForm() (no generic parameter) with Zod v4 resolver to avoid nullable field type inference conflicts.
+17. Validate alert rule config separately per rule_type on form submit rather than using a discriminated union in the form resolver.
+18. Cast Record<string, unknown> to Json via `as unknown as Json` for Supabase insert/update compatibility with JSONB columns.
 
 ## Issues / Blockers
 
@@ -33,4 +36,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 04 Plan 01 (Alert engine foundation) on 2026-02-13; commits `c5a4cd3` (database migration) and `5df1de7` (shared Edge Function modules) create the trigger/RPC/cron infrastructure and typed evaluators/formatters for the alert engine.
+- **Last Work Session:** Completed Phase 04 Plan 03 (Alert rules UI) on 2026-02-13; commits `ec9dc12` (Zod validators + SeverityBadge) and `112c295` (form, list, management page) add the alert rule management dashboard at /alerts/rules with dynamic config forms and role-based access control.
