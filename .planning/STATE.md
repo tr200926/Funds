@@ -5,9 +5,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 ## Current Plan Progress
 
 - **Latest Phase:** 05-whatsapp-integration-polish
-- **Latest Plan:** 01 (WhatsApp Backend Foundation) -- completed 2026-02-13. Schema guardrails (CHECK constraint on notification_channels.channel_type), formatAlertWhatsAppParams formatter, sendWhatsApp + dispatchWhatsApp in dispatch-notifications Edge Function with per-user opt-in enforcement.
-- **Completed Plans:** 04-01 (DB triggers + shared code), 04-02 (Edge Functions), 04-03 (Alert rules UI), 04-04 (Alert history + channels UI), 05-01 (WhatsApp backend foundation)
-- **Next Steps:** Execute Phase 05 Plan 02 (WhatsApp channel configuration UI) and Plan 03 (user profile opt-in toggle).
+- **Latest Plan:** 02 (WhatsApp Channel Configuration UI) -- completed 2026-02-13. Zod validator with whatsapp channel type and E.164 recipients, WhatsApp-specific channel form UI with org user dropdown and opt-in badges, WhatsAppOptIn component for per-user opt-in, /settings/profile page.
+- **Completed Plans:** 04-01 (DB triggers + shared code), 04-02 (Edge Functions), 04-03 (Alert rules UI), 04-04 (Alert history + channels UI), 05-01 (WhatsApp backend foundation), 05-02 (WhatsApp channel configuration UI)
+- **Next Steps:** Execute Phase 05 Plan 03 (final WhatsApp integration polish).
 
 ## Decisions Recorded
 
@@ -36,6 +36,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 23. WhatsApp channels store recipients as Array<{ phone, user_id }> to support per-user opt-in verification before every dispatch.
 24. Template selection uses severity-based mapping: critical/emergency -> critical_alert, all others -> balance_warning.
 25. dispatchWhatsApp handles its own delivery logging per recipient rather than using the shared single-delivery path, because WhatsApp requires per-recipient opt-in checks.
+26. Use profiles.full_name (not display_name) for org user dropdown display since profiles table schema uses full_name column.
+27. Prefill phone from user profile settings when selecting a WhatsApp recipient in the admin channel form to reduce manual entry.
+28. WhatsApp opt-in timestamp (whatsapp_opted_in_at) is preserved on re-save if already set, only reset to null when opting out.
 
 ## Issues / Blockers
 
@@ -44,4 +47,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 05 Plan 01 on 2026-02-13. WhatsApp backend foundation: schema migration with CHECK constraint + partial index, formatAlertWhatsAppParams formatter, sendWhatsApp + dispatchWhatsApp in dispatch-notifications with per-user opt-in enforcement. 2 tasks, 3 files, 2 commits.
+- **Last Work Session:** Completed Phase 05 Plan 02 on 2026-02-13. WhatsApp channel configuration UI: Zod validator with whatsapp type + E.164 recipients schema, channel form WhatsApp recipient rows with org user dropdown and opt-in badges, WhatsAppOptIn component for per-user toggle, /settings/profile page. 2 tasks, 5 files, 2 commits. Duration: 5 min.
