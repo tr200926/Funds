@@ -5,8 +5,8 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 ## Current Plan Progress
 
 - **Latest Phase:** 04-alert-engine-email-telegram
-- **Latest Plan:** 03 (Alert rules UI: Zod validators, form, list, management page) -- completed 2026-02-13. Zod schemas for all 5 rule type configs, AlertRuleForm with dynamic config fields, AlertRuleList with CRUD and toggle, /alerts/rules page with role-based access.
-- **Next Steps:** Execute Phase 04 Plan 04 (alert history UI) or Plan 02 (evaluate-alerts Edge Function).
+- **Latest Plan:** 04 (Alert history and notification channels UI) -- completed 2026-02-13. Alert history DataTable at /alerts with severity/status/time filtering, real-time updates, and detail dialog with acknowledge/dismiss/resolve actions. Notification channel config at /settings/notifications with email/telegram CRUD and quiet hours.
+- **Next Steps:** Execute Phase 04 Plan 05 (Edge Functions for alert evaluation and dispatch) or Plan 01/02 (database triggers and Edge Functions).
 
 ## Decisions Recorded
 
@@ -28,6 +28,10 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 16. Use untyped useForm() (no generic parameter) with Zod v4 resolver to avoid nullable field type inference conflicts.
 17. Validate alert rule config separately per rule_type on form submit rather than using a discriminated union in the form resolver.
 18. Cast Record<string, unknown> to Json via `as unknown as Json` for Supabase insert/update compatibility with JSONB columns.
+19. Use sonner for toast notifications instead of shadcn toast (simpler API, zero boilerplate Toaster component).
+20. Refetch full alert list on realtime INSERT because Supabase realtime payload lacks joined relations.
+21. Display notification channels as cards (not DataTable) since channels are typically few items with rich visual density needs.
+22. Use controlled React state for channel form instead of react-hook-form to handle dynamic email/telegram config fields cleanly.
 
 ## Issues / Blockers
 
@@ -36,4 +40,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 04 Plan 03 (Alert rules UI) on 2026-02-13; commits `ec9dc12` (Zod validators + SeverityBadge) and `112c295` (form, list, management page) add the alert rule management dashboard at /alerts/rules with dynamic config forms and role-based access control.
+- **Last Work Session:** Completed Phase 04 Plan 04 (Alert history and notification channels) on 2026-02-13; commits `966a558` (alert history page + detail dialog) and `a6a57b6` (notification channel config page) add the alert monitoring and channel management UI with real-time updates, action buttons, and email/telegram CRUD.
