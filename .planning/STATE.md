@@ -4,9 +4,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Current Plan Progress
 
-- **Latest Phase:** 03-dashboard-mvp-nextjs
-- **Latest Plan:** 03 (Account detail + pipeline health) – completed 2026-02-13. The account drill-down view now fetches charts/alerts in parallel while the pipeline health console streams realtime runs with summary stats.
-- **Next Steps:** Move to Phase 03 Plan 04 (alert management UX polish) once the dashboard is reviewed end-to-end.
+- **Latest Phase:** 04-alert-engine-email-telegram
+- **Latest Plan:** 01 (Alert engine foundation: triggers + shared modules) -- completed 2026-02-13. pg_net triggers on spend_records/balance_snapshots INSERT, status change trigger, cooldown RPC, pg_cron escalation, and 5 shared TypeScript modules for Edge Functions.
+- **Next Steps:** Execute Phase 04 Plan 02 (evaluate-alerts Edge Function).
 
 ## Decisions Recorded
 
@@ -21,6 +21,10 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 9. Use Supabase's `getUser()` middleware refresh pattern (instead of deprecated helpers) to guarantee fresh JWTs during SSR.
 10. Standardize all Recharts usage behind a shared ChartWrapper component so chart heights are explicit and hydration bugs are avoided.
 11. Focus pipeline health stats on the most recent 24 hours (runs, success %, last success, failed accounts) to give operators immediate SLA insight.
+12. Alert evaluation triggers fire on INSERT only (not UPDATE) on spend_records to avoid double evaluation during UPSERT re-pulls.
+13. Account status change uses a separate trigger with WHEN (OLD.status IS DISTINCT FROM NEW.status) guard rather than evaluating in the generic trigger.
+14. time_to_depletion evaluator tries the database RPC first, then falls back to manual balance/avg-spend calculation from spend_records.
+15. Quiet hours use per-channel configurable timezone (not hardcoded to Cairo) with midnight-wrapping window support.
 
 ## Issues / Blockers
 
@@ -29,4 +33,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 03 Plan 03 (Account detail + pipeline health) on 2026-02-13; commits `9e1660e` and `3b24695` add the account drill-down experience, shared chart components, and the realtime pipeline health dashboard.
+- **Last Work Session:** Completed Phase 04 Plan 01 (Alert engine foundation) on 2026-02-13; commits `c5a4cd3` (database migration) and `5df1de7` (shared Edge Function modules) create the trigger/RPC/cron infrastructure and typed evaluators/formatters for the alert engine.
