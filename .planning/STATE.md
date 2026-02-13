@@ -4,9 +4,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Current Plan Progress
 
-- **Latest Phase:** 05-whatsapp-integration-polish
-- **Latest Plan:** 02 (Dashboard WhatsApp channel form + opt-in UI) -- completed 2026-02-13. Built a shared notification channel validator with WhatsApp recipients, upgraded the channel form to load org profiles with opt-in badges, and shipped /settings/profile with a WhatsApp opt-in card that safely merges profile settings.
-- **Next Steps:** Continue with Phase 05 Plan 03 (end-to-end validation + template smoke tests).
+- **Latest Phase:** 04-alert-engine-email-telegram
+- **Latest Plan:** 04 (Alert history and notification channels UI) -- completed 2026-02-13. Alert history DataTable at /alerts with severity/status/time filtering, real-time updates, and detail dialog with acknowledge/dismiss/resolve actions. Notification channel config at /settings/notifications with email/telegram CRUD and quiet hours.
+- **Next Steps:** Execute Phase 04 Plan 05 (Edge Functions for alert evaluation and dispatch) or Plan 01/02 (database triggers and Edge Functions).
 
 ## Decisions Recorded
 
@@ -32,9 +32,6 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 20. Refetch full alert list on realtime INSERT because Supabase realtime payload lacks joined relations.
 21. Display notification channels as cards (not DataTable) since channels are typically few items with rich visual density needs.
 22. Use controlled React state for channel form instead of react-hook-form to handle dynamic email/telegram config fields cleanly.
-23. Keep whatsapp_opt_in/phone metadata inside profiles.settings JSON so user consent stays coupled with profile preferences.
-24. Treat supabase/functions/dispatch-notifications/index.ts as the canonical multi-channel delivery entry point; new channels extend that switch.
-25. Surface WhatsApp opt-in badges inside the channel form so admins can make informed overrides instead of silently adding non-consenting users.
 
 ## Issues / Blockers
 
@@ -43,5 +40,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 05 Plan 02 (WhatsApp channel form + dashboard opt-in UI) on 2026-02-13; commits `59d8aea` (channel validator + form/list upgrades) and `cac0db4` (/settings/profile + WhatsAppOptIn component) delivered the front-end needed to collect consent and recipients.
-- **Previous Session:** Completed Phase 05 Plan 01 (WhatsApp backend foundation) on 2026-02-13; commits `4ed7dfa` (schema guardrails/index/comment updates) and `e974ed5` (dispatch-notifications Edge Function with WhatsApp formatter + sender) delivered the backend plumbing required before UI/verification work.
+- **Last Work Session:** Completed Phase 04 Plan 04 (Alert history and notification channels) on 2026-02-13; commits `966a558` (alert history page + detail dialog) and `a6a57b6` (notification channel config page) add the alert monitoring and channel management UI with real-time updates, action buttons, and email/telegram CRUD.
