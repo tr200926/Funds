@@ -5,8 +5,8 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 ## Current Plan Progress
 
 - **Latest Phase:** 03-dashboard-mvp-nextjs
-- **Latest Plan:** 01 (Dashboard Scaffold + Auth) – completed 2026-02-13. Next.js dashboard now has Supabase SSR auth, responsive layout chrome, realtime hook, and the SQL migration enabling postgres_changes on dashboard tables.
-- **Next Steps:** Continue Phase 03 with Plan 02 (Overview experience) once Supabase env vars from USER-SETUP are populated.
+- **Latest Plan:** 02 (Overview Experience) – completed 2026-02-13. Overview route now fetches non-archived ad accounts with platform metadata, renders the realtime TanStack DataTable, and exposes platform/status/business manager filters plus days-to-depletion indicators.
+- **Next Steps:** Continue Phase 03 with Plan 03 (Account detail + pipeline health) after verifying `/overview` in a Supabase-configured environment.
 
 ## Decisions Recorded
 
@@ -27,4 +27,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 03 Plan 01 (Dashboard Scaffold + Auth) on 2026-02-13; dashboard/ now contains the Next.js app with Supabase SSR auth, responsive header/sidebar/mobile navigation, realtime hook, and the SQL migration enabling postgres_changes on ad_accounts, alerts, and pipeline_runs.
+- **Last Work Session:** Completed Phase 03 Plan 02 (Overview experience) on 2026-02-13; `/overview` now streams Supabase data into the realtime DataTable with filters, and commits `785a742` + `939da28` capture the server fetch and client interactions.

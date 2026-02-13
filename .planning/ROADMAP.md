@@ -38,7 +38,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md -- Next.js scaffold, Supabase SSR auth, dashboard layout, shared utilities, Realtime migration
-- [ ] 03-02-PLAN.md -- Account overview page with DataTable, filters, and real-time updates
+- [x] 03-02-PLAN.md -- Account overview page with DataTable, filters, and real-time updates
 - [ ] 03-03-PLAN.md -- Account detail page with Recharts charts and pipeline health page
 - [ ] 03-04-PLAN.md -- Full dashboard end-to-end verification checkpoint
 
