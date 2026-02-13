@@ -47,13 +47,14 @@ Plans:
 **Requirements**: R5.1-R5.9
 **Depends on**: Phase 1, Phase 2, Phase 3
 **Plans:** 5 plans
+**Status:** Complete
 
 Plans:
-- [ ] 04-01-PLAN.md -- Database migration (pg_net triggers, cooldown RPC, status change trigger, pg_cron) + shared Edge Function code
-- [ ] 04-02-PLAN.md -- Edge Functions: evaluate-alerts, dispatch-notifications, escalate-alerts
-- [ ] 04-03-PLAN.md -- Dashboard alert rules management UI with Zod-validated forms
-- [ ] 04-04-PLAN.md -- Dashboard alert history + acknowledgment UI, notification channel configuration
-- [ ] 04-05-PLAN.md -- End-to-end alert engine verification checkpoint
+- [x] 04-01-PLAN.md -- Database migration (pg_net triggers, cooldown RPC, status change trigger, pg_cron) + shared Edge Function code
+- [x] 04-02-PLAN.md -- Edge Functions: evaluate-alerts, dispatch-notifications, escalate-alerts
+- [x] 04-03-PLAN.md -- Dashboard alert rules management UI with Zod-validated forms
+- [x] 04-04-PLAN.md -- Dashboard alert history + acknowledgment UI, notification channel configuration
+- [x] 04-05-PLAN.md -- End-to-end alert engine verification checkpoint
 
 ### Phase 5: WhatsApp Integration & Polish
 **Goal**: Add WhatsApp as alert channel and polish the platform
