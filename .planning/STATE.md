@@ -4,9 +4,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Current Plan Progress
 
-- **Latest Phase:** 04-alert-engine-email-telegram
-- **Latest Plan:** 04 (Alert history and notification channels UI) -- completed 2026-02-13. Alert history DataTable at /alerts with severity/status/time filtering, real-time updates, and detail dialog with acknowledge/dismiss/resolve actions. Notification channel config at /settings/notifications with email/telegram CRUD and quiet hours.
-- **Next Steps:** Execute Phase 04 Plan 05 (Edge Functions for alert evaluation and dispatch) or Plan 01/02 (database triggers and Edge Functions).
+- **Latest Phase:** 05-whatsapp-integration-polish
+- **Latest Plan:** 01 (WhatsApp schema + dispatch backend) -- completed 2026-02-13. Added WhatsApp-safe notification channel constraint, documented profile opt-in metadata, created idx_profiles_whatsapp_opt_in, added WhatsApp template formatter, and rebuilt dispatch-notifications with email/telegram/whatsapp senders hitting Resend, Telegram Bot API, and Graph API v23.0.
+- **Next Steps:** Continue with Phase 05 Plan 02 (dashboard WhatsApp channel form + opt-in UI) followed by Plan 03 (end-to-end validation + template smoke tests).
 
 ## Decisions Recorded
 
@@ -32,12 +32,16 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 20. Refetch full alert list on realtime INSERT because Supabase realtime payload lacks joined relations.
 21. Display notification channels as cards (not DataTable) since channels are typically few items with rich visual density needs.
 22. Use controlled React state for channel form instead of react-hook-form to handle dynamic email/telegram config fields cleanly.
+23. Keep whatsapp_opt_in/phone metadata inside profiles.settings JSON so user consent stays coupled with profile preferences.
+24. Treat supabase/functions/dispatch-notifications/index.ts as the canonical multi-channel delivery entry point; new channels extend that switch.
 
 ## Issues / Blockers
 
 - `gsd-tools state` automation still cannot parse this bootstrap `STATE.md`, so plan/phase counters must be updated manually until the canonical format is restored.
 - Dashboard requires Supabase env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) from the user setup file before login/data paths can be exercised locally.
+- Local Supabase Docker stack is not running, so `npx supabase db lint` fails to connect to 127.0.0.1:54322; `npx supabase start` is still downloading >700 MB of base images.
+- `npx supabase functions deploy dispatch-notifications` requires `supabase login` / access token before we can verify deployment; credentials pending user setup.
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 04 Plan 04 (Alert history and notification channels) on 2026-02-13; commits `966a558` (alert history page + detail dialog) and `a6a57b6` (notification channel config page) add the alert monitoring and channel management UI with real-time updates, action buttons, and email/telegram CRUD.
+- **Last Work Session:** Completed Phase 05 Plan 01 (WhatsApp backend foundation) on 2026-02-13; commits `4ed7dfa` (schema guardrails/index/comment updates) and `e974ed5` (dispatch-notifications Edge Function with WhatsApp formatter + sender) deliver the backend plumbing required before UI/verification work.
