@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Mail, MessageCircle, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Mail, MessageCircle, Pencil, PhoneCall, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import type { Json } from '@/lib/database.types'
@@ -20,6 +20,8 @@ import { Switch } from '@/components/ui/switch'
 import { SeverityBadge } from '@/components/alerts/severity-badge'
 import { createClient } from '@/lib/supabase/client'
 
+import type { WhatsAppRecipient } from '@/lib/validators/notification-channels'
+
 import { ChannelForm, type NotificationChannelFormValues } from './channel-form'
 
 // ---------------------------------------------------------------------------
@@ -30,13 +32,61 @@ interface NotificationChannel {
   id: string
   org_id: string
   name: string
-  channel_type: string
+  channel_type: NotificationChannelFormValues['channel_type']
   config: Record<string, unknown>
   min_severity: 'info' | 'warning' | 'critical' | 'emergency'
   is_enabled: boolean
   active_hours: { start: string; end: string; timezone: string } | null
   created_at: string
   updated_at: string
+}
+
+function mapChannelToFormValues(
+  channel: NotificationChannel
+): NotificationChannelFormValues {
+  if (channel.channel_type === 'email') {
+    const recipients = Array.isArray(channel.config?.recipients)
+      ? (channel.config.recipients as string[])
+      : []
+
+    return {
+      name: channel.name,
+      channel_type: 'email',
+      min_severity: channel.min_severity,
+      is_enabled: channel.is_enabled,
+      active_hours: channel.active_hours,
+      config: { recipients },
+    }
+  }
+
+  if (channel.channel_type === 'telegram') {
+    const chatId =
+      typeof channel.config?.chat_id === 'string'
+        ? (channel.config.chat_id as string)
+        : ''
+
+    return {
+      name: channel.name,
+      channel_type: 'telegram',
+      min_severity: channel.min_severity,
+      is_enabled: channel.is_enabled,
+      active_hours: channel.active_hours,
+      config: { chat_id: chatId },
+    }
+  }
+
+  const recipients = Array.isArray(channel.config?.recipients)
+    ? (channel.config.recipients as WhatsAppRecipient[])
+    : []
+
+  return {
+    name: channel.name,
+    channel_type: 'whatsapp',
+    min_severity: channel.min_severity,
+    is_enabled: channel.is_enabled,
+    active_hours: channel.active_hours,
+    config: { recipients },
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -62,6 +112,10 @@ export function ChannelList({ orgId, userRole }: ChannelListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const canEdit = userRole === 'admin' || userRole === 'manager'
+
+  const editingInitialValues = editingChannel
+    ? mapChannelToFormValues(editingChannel)
+    : undefined
 
   const fetchChannels = useCallback(async () => {
     const supabase = createClient()
@@ -216,18 +270,26 @@ export function ChannelList({ orgId, userRole }: ChannelListProps) {
             No notification channels configured
           </p>
           <p className="mt-1 max-w-sm text-center text-xs text-muted-foreground/70">
-            Add an email or Telegram channel to start receiving alerts.
+            Add an Email, Telegram, or WhatsApp channel to start receiving alerts.
           </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {channels.map((channel) => {
-            const ChannelIcon =
-              channel.channel_type === 'telegram' ? MessageCircle : Mail
-            const recipients = Array.isArray(channel.config?.recipients)
+            const iconMap = {
+              email: Mail,
+              telegram: MessageCircle,
+              whatsapp: PhoneCall,
+            } as const
+            const ChannelIcon = iconMap[channel.channel_type] ?? Mail
+            const emailRecipients = Array.isArray(channel.config?.recipients)
               ? (channel.config.recipients as string[])
               : []
             const chatId = (channel.config?.chat_id as string) ?? ''
+            const whatsappRecipients =
+              channel.channel_type === 'whatsapp' && Array.isArray(channel.config?.recipients)
+                ? (channel.config.recipients as WhatsAppRecipient[])
+                : []
 
             return (
               <Card key={channel.id} className="relative p-4">
@@ -268,16 +330,21 @@ export function ChannelList({ orgId, userRole }: ChannelListProps) {
                   </div>
 
                   {/* Config summary */}
-                  <div className="text-xs text-muted-foreground">
-                    {channel.channel_type === 'email' && recipients.length > 0 && (
-                      <span>
-                        {recipients.length} recipient{recipients.length !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {channel.channel_type === 'telegram' && chatId && (
-                      <span>Chat ID: {chatId}</span>
-                    )}
-                  </div>
+                   <div className="text-xs text-muted-foreground space-y-0.5">
+                     {channel.channel_type === 'email' && emailRecipients.length > 0 && (
+                       <span>
+                         {emailRecipients.length} recipient{emailRecipients.length !== 1 ? 's' : ''}
+                       </span>
+                     )}
+                     {channel.channel_type === 'telegram' && chatId && (
+                       <span>Chat ID: {chatId}</span>
+                     )}
+                     {channel.channel_type === 'whatsapp' && whatsappRecipients.length > 0 && (
+                       <span>
+                         WhatsApp recipients: {whatsappRecipients.length}
+                       </span>
+                     )}
+                   </div>
 
                   {/* Quiet hours */}
                   {channel.active_hours && (
@@ -326,20 +393,10 @@ export function ChannelList({ orgId, userRole }: ChannelListProps) {
       {/* Create/Edit dialog */}
       <ChannelForm
         mode={formMode}
+        orgId={orgId}
         open={formOpen}
         onOpenChange={setFormOpen}
-        initialValues={
-          editingChannel
-            ? {
-                name: editingChannel.name,
-                channel_type: editingChannel.channel_type as 'email' | 'telegram',
-                min_severity: editingChannel.min_severity,
-                is_enabled: editingChannel.is_enabled,
-                active_hours: editingChannel.active_hours,
-                config: editingChannel.config,
-              }
-            : undefined
-        }
+        initialValues={editingInitialValues}
         onSubmit={formMode === 'create' ? handleCreate : handleEdit}
       />
 
