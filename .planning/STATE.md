@@ -5,8 +5,8 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 ## Current Plan Progress
 
 - **Latest Phase:** 03-dashboard-mvp-nextjs
-- **Latest Plan:** 02 (Overview Experience) – completed 2026-02-13. Overview route now fetches non-archived ad accounts with platform metadata, renders the realtime TanStack DataTable, and exposes platform/status/business manager filters plus days-to-depletion indicators.
-- **Next Steps:** Continue Phase 03 with Plan 03 (Account detail + pipeline health) after verifying `/overview` in a Supabase-configured environment.
+- **Latest Plan:** 03 (Account detail + pipeline health) – completed 2026-02-13. The account drill-down view now fetches charts/alerts in parallel while the pipeline health console streams realtime runs with summary stats.
+- **Next Steps:** Move to Phase 03 Plan 04 (alert management UX polish) once the dashboard is reviewed end-to-end.
 
 ## Decisions Recorded
 
@@ -19,6 +19,8 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 7. Treat any pipeline_run stuck in `running` for 30+ minutes as failed via the global error handler to keep dashboards accurate.
 8. Keep the Next.js dashboard isolated inside `dashboard/` so pipeline tooling and dependencies in the repo root remain untouched.
 9. Use Supabase's `getUser()` middleware refresh pattern (instead of deprecated helpers) to guarantee fresh JWTs during SSR.
+10. Standardize all Recharts usage behind a shared ChartWrapper component so chart heights are explicit and hydration bugs are avoided.
+11. Focus pipeline health stats on the most recent 24 hours (runs, success %, last success, failed accounts) to give operators immediate SLA insight.
 
 ## Issues / Blockers
 
@@ -27,4 +29,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 03 Plan 02 (Overview experience) on 2026-02-13; `/overview` now streams Supabase data into the realtime DataTable with filters, and commits `785a742` + `939da28` capture the server fetch and client interactions.
+- **Last Work Session:** Completed Phase 03 Plan 03 (Account detail + pipeline health) on 2026-02-13; commits `9e1660e` and `3b24695` add the account drill-down experience, shared chart components, and the realtime pipeline health dashboard.
