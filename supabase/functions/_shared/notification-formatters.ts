@@ -169,6 +169,72 @@ export function formatAlertTelegramText(alert: AlertWithDetails): string {
 }
 
 // =============================================================================
+// WhatsApp Template Formatter
+// =============================================================================
+
+interface WhatsAppTemplatePayload {
+  templateName: string;
+  params: string[];
+}
+
+/**
+ * Selects the approved WhatsApp template + body parameters for a given alert.
+ *
+ * - critical/emergency => `critical_alert` template
+ *   params: [accountName, message, balance string, cairo timestamp]
+ * - all other severities => `balance_warning` template
+ *   params: [accountName, message, depletion projection, cairo timestamp]
+ */
+export function formatAlertWhatsAppParams(
+  alert: AlertWithDetails
+): WhatsAppTemplatePayload {
+  const accountName = alert.ad_accounts?.account_name ?? "Unknown Account";
+  const cairoTimestamp = new Date(alert.created_at).toLocaleString("en-US", {
+    timeZone: "Africa/Cairo",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  const balanceSource =
+    (alert.context_data?.balance as number | string | undefined) ??
+    alert.ad_accounts?.current_balance ??
+    null;
+  const parsedBalance =
+    typeof balanceSource === "number" ? balanceSource : Number(balanceSource);
+  const currency = alert.ad_accounts?.currency ?? "EGP";
+  const balanceString = Number.isFinite(parsedBalance)
+    ? `${currency} ${parsedBalance.toLocaleString("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      })}`
+    : "N/A";
+
+  if (alert.severity === "critical" || alert.severity === "emergency") {
+    return {
+      templateName: "critical_alert",
+      params: [accountName, alert.message, balanceString, cairoTimestamp],
+    };
+  }
+
+  const daysRemainingRaw = alert.context_data?.days_remaining as
+    | number
+    | string
+    | undefined;
+  const daysRemaining =
+    typeof daysRemainingRaw === "number"
+      ? daysRemainingRaw
+      : Number(daysRemainingRaw);
+  const projection = Number.isFinite(daysRemaining) && daysRemaining > 0
+    ? `Funds may deplete in ~${Math.round(daysRemaining)} days`
+    : "Monitor spend to avoid depletion";
+
+  return {
+    templateName: "balance_warning",
+    params: [accountName, alert.message, projection, cairoTimestamp],
+  };
+}
+
+// =============================================================================
 // Quiet Hours Check
 // =============================================================================
 
