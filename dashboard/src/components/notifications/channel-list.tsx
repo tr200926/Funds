@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Mail, MessageCircle, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Mail, MessageCircle, Pencil, Plus, Smartphone, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import type { Json } from '@/lib/database.types'
@@ -216,14 +216,18 @@ export function ChannelList({ orgId, userRole }: ChannelListProps) {
             No notification channels configured
           </p>
           <p className="mt-1 max-w-sm text-center text-xs text-muted-foreground/70">
-            Add an email or Telegram channel to start receiving alerts.
+            Add an email, Telegram, or WhatsApp channel to start receiving alerts.
           </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {channels.map((channel) => {
             const ChannelIcon =
-              channel.channel_type === 'telegram' ? MessageCircle : Mail
+              channel.channel_type === 'whatsapp'
+                ? Smartphone
+                : channel.channel_type === 'telegram'
+                  ? MessageCircle
+                  : Mail
             const recipients = Array.isArray(channel.config?.recipients)
               ? (channel.config.recipients as string[])
               : []
@@ -277,6 +281,14 @@ export function ChannelList({ orgId, userRole }: ChannelListProps) {
                     {channel.channel_type === 'telegram' && chatId && (
                       <span>Chat ID: {chatId}</span>
                     )}
+                    {channel.channel_type === 'whatsapp' &&
+                      Array.isArray(channel.config?.recipients) && (
+                        <span>
+                          {(channel.config.recipients as Array<{ user_id: string; phone: string }>).length}{' '}
+                          recipient
+                          {(channel.config.recipients as Array<{ user_id: string; phone: string }>).length !== 1 ? 's' : ''}
+                        </span>
+                      )}
                   </div>
 
                   {/* Quiet hours */}
@@ -328,11 +340,12 @@ export function ChannelList({ orgId, userRole }: ChannelListProps) {
         mode={formMode}
         open={formOpen}
         onOpenChange={setFormOpen}
+        orgId={orgId}
         initialValues={
           editingChannel
             ? {
                 name: editingChannel.name,
-                channel_type: editingChannel.channel_type as 'email' | 'telegram',
+                channel_type: editingChannel.channel_type as 'email' | 'telegram' | 'whatsapp',
                 min_severity: editingChannel.min_severity,
                 is_enabled: editingChannel.is_enabled,
                 active_hours: editingChannel.active_hours,

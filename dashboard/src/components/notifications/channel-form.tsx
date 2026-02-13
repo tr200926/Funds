@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { Loader2, Mail, MessageCircle } from 'lucide-react'
-import { z } from 'zod'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Loader2, Mail, MessageCircle, Plus, Smartphone, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -25,28 +25,15 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { createClient } from '@/lib/supabase/client'
+import {
+  channelFormSchema,
+  type ChannelType,
+  type NotificationChannelFormValues,
+  type WhatsAppRecipient,
+} from '@/lib/validators/notification-channels'
 
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
-
-const channelFormSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-  channel_type: z.enum(['email', 'telegram']),
-  min_severity: z.enum(['info', 'warning', 'critical', 'emergency']),
-  is_enabled: z.boolean().default(true),
-  active_hours: z
-    .object({
-      start: z.string(),
-      end: z.string(),
-      timezone: z.string().default('Africa/Cairo'),
-    })
-    .nullable()
-    .optional(),
-  config: z.record(z.string(), z.unknown()),
-})
-
-export type NotificationChannelFormValues = z.infer<typeof channelFormSchema>
+export type { NotificationChannelFormValues }
 
 // ---------------------------------------------------------------------------
 // Email validation
@@ -72,6 +59,35 @@ function validateEmails(text: string): { valid: string[]; invalid: string[] } {
 }
 
 // ---------------------------------------------------------------------------
+// WhatsApp phone validation
+// ---------------------------------------------------------------------------
+
+const E164_RE = /^\+\d{10,15}$/
+
+// ---------------------------------------------------------------------------
+// Types for org user profiles
+// ---------------------------------------------------------------------------
+
+interface OrgUserProfile {
+  id: string
+  full_name: string
+  settings: {
+    whatsapp_opt_in?: boolean
+    whatsapp_phone?: string
+  } | null
+}
+
+// ---------------------------------------------------------------------------
+// WhatsApp recipient row UI state
+// ---------------------------------------------------------------------------
+
+interface WhatsAppRecipientRow {
+  key: string // React key
+  user_id: string
+  phone: string
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -81,6 +97,7 @@ interface ChannelFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (values: NotificationChannelFormValues) => Promise<void>
+  orgId?: string
 }
 
 export function ChannelForm({
@@ -89,10 +106,11 @@ export function ChannelForm({
   open,
   onOpenChange,
   onSubmit,
+  orgId,
 }: ChannelFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
-  const [channelType, setChannelType] = useState<'email' | 'telegram'>(
-    (initialValues?.channel_type as 'email' | 'telegram') ?? 'email'
+  const [channelType, setChannelType] = useState<ChannelType>(
+    (initialValues?.channel_type as ChannelType) ?? 'email'
   )
   const [minSeverity, setMinSeverity] = useState<string>(
     initialValues?.min_severity ?? 'warning'
@@ -123,8 +141,146 @@ export function ChannelForm({
     (existingConfig.chat_id as string) ?? ''
   )
 
+  // WhatsApp recipients
+  const [whatsappRows, setWhatsappRows] = useState<WhatsAppRecipientRow[]>(() => {
+    if (
+      initialValues?.channel_type === 'whatsapp' &&
+      Array.isArray(existingConfig.recipients)
+    ) {
+      return (existingConfig.recipients as WhatsAppRecipient[]).map((r, i) => ({
+        key: `init-${i}`,
+        user_id: r.user_id,
+        phone: r.phone,
+      }))
+    }
+    return []
+  })
+  const rowKeyCounter = useRef(0)
+
+  // Org users for WhatsApp recipient selection
+  const [orgUsers, setOrgUsers] = useState<OrgUserProfile[]>([])
+  const [orgUsersLoading, setOrgUsersLoading] = useState(false)
+  const orgUsersFetched = useRef(false)
+
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Reset form state when dialog opens/closes or initialValues change
+  useEffect(() => {
+    if (open) {
+      setName(initialValues?.name ?? '')
+      setChannelType((initialValues?.channel_type as ChannelType) ?? 'email')
+      setMinSeverity(initialValues?.min_severity ?? 'warning')
+      setIsEnabled(initialValues?.is_enabled ?? true)
+      const hours = initialValues?.active_hours
+      setQuietEnabled(!!hours)
+      setQuietStart((hours as { start: string } | null)?.start ?? '00:00')
+      setQuietEnd((hours as { end: string } | null)?.end ?? '08:00')
+      setTimezone((hours as { timezone: string } | null)?.timezone ?? 'Africa/Cairo')
+      const cfg = (initialValues?.config ?? {}) as Record<string, unknown>
+      setEmailRecipients(
+        Array.isArray(cfg.recipients)
+          ? (cfg.recipients as string[]).join('\n')
+          : ''
+      )
+      setTelegramChatId((cfg.chat_id as string) ?? '')
+      if (
+        initialValues?.channel_type === 'whatsapp' &&
+        Array.isArray(cfg.recipients)
+      ) {
+        setWhatsappRows(
+          (cfg.recipients as WhatsAppRecipient[]).map((r, i) => ({
+            key: `init-${i}`,
+            user_id: r.user_id,
+            phone: r.phone,
+          }))
+        )
+      } else {
+        setWhatsappRows([])
+      }
+      setErrors({})
+    }
+  }, [open, initialValues])
+
+  // Fetch org users when WhatsApp is selected
+  const fetchOrgUsers = useCallback(async () => {
+    if (!orgId || orgUsersFetched.current) return
+    setOrgUsersLoading(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, settings')
+        .eq('org_id', orgId)
+        .order('full_name', { ascending: true })
+
+      if (error) {
+        console.error('Failed to fetch org users:', error)
+        return
+      }
+
+      setOrgUsers(
+        (data ?? []).map((u) => ({
+          id: u.id,
+          full_name: u.full_name,
+          settings: u.settings as OrgUserProfile['settings'],
+        }))
+      )
+      orgUsersFetched.current = true
+    } finally {
+      setOrgUsersLoading(false)
+    }
+  }, [orgId])
+
+  useEffect(() => {
+    if (channelType === 'whatsapp' && open) {
+      fetchOrgUsers()
+    }
+  }, [channelType, open, fetchOrgUsers])
+
+  // Reset config when switching channel types
+  function handleChannelTypeChange(newType: ChannelType) {
+    setChannelType(newType)
+    // Clear previous config state to prevent leaking between types
+    setEmailRecipients('')
+    setTelegramChatId('')
+    setWhatsappRows([])
+    setErrors({})
+  }
+
+  // WhatsApp row helpers
+  function addWhatsappRow() {
+    rowKeyCounter.current += 1
+    setWhatsappRows((prev) => [
+      ...prev,
+      { key: `row-${rowKeyCounter.current}`, user_id: '', phone: '' },
+    ])
+  }
+
+  function removeWhatsappRow(key: string) {
+    setWhatsappRows((prev) => prev.filter((r) => r.key !== key))
+  }
+
+  function updateWhatsappRow(
+    key: string,
+    field: 'user_id' | 'phone',
+    value: string
+  ) {
+    setWhatsappRows((prev) =>
+      prev.map((r) => {
+        if (r.key !== key) return r
+        const updated = { ...r, [field]: value }
+        // When selecting a user, prefill phone if the user has one saved
+        if (field === 'user_id') {
+          const user = orgUsers.find((u) => u.id === value)
+          if (user?.settings?.whatsapp_phone) {
+            updated.phone = user.settings.whatsapp_phone
+          }
+        }
+        return updated
+      })
+    )
+  }
 
   async function handleSubmit() {
     setErrors({})
@@ -144,11 +300,40 @@ export function ChannelForm({
         newErrors.recipients = `Invalid emails: ${invalid.join(', ')}`
       }
       config = { recipients: valid }
-    } else {
+    } else if (channelType === 'telegram') {
       if (!telegramChatId.trim()) {
         newErrors.chat_id = 'Chat ID is required'
       }
       config = { chat_id: telegramChatId.trim() }
+    } else if (channelType === 'whatsapp') {
+      // Validate each WhatsApp recipient row
+      const validRecipients: WhatsAppRecipient[] = []
+      let hasRowErrors = false
+
+      if (whatsappRows.length === 0) {
+        newErrors.whatsapp_recipients = 'At least one recipient required'
+      } else {
+        for (let i = 0; i < whatsappRows.length; i++) {
+          const row = whatsappRows[i]
+          if (!row.user_id) {
+            newErrors[`whatsapp_user_${i}`] = 'Select a user'
+            hasRowErrors = true
+          }
+          if (!row.phone || !E164_RE.test(row.phone)) {
+            newErrors[`whatsapp_phone_${i}`] =
+              'Enter a valid E.164 phone (e.g., +201234567890)'
+            hasRowErrors = true
+          }
+          if (!hasRowErrors) {
+            validRecipients.push({
+              user_id: row.user_id,
+              phone: row.phone,
+            })
+          }
+        }
+      }
+
+      config = { recipients: validRecipients }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -186,7 +371,7 @@ export function ChannelForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === 'create' ? 'Add Notification Channel' : 'Edit Notification Channel'}
@@ -213,7 +398,7 @@ export function ChannelForm({
             <Label>Channel Type</Label>
             <Select
               value={channelType}
-              onValueChange={(v) => setChannelType(v as 'email' | 'telegram')}
+              onValueChange={(v) => handleChannelTypeChange(v as ChannelType)}
               disabled={mode === 'edit'}
             >
               <SelectTrigger className="w-full">
@@ -230,6 +415,12 @@ export function ChannelForm({
                   <span className="flex items-center gap-2">
                     <MessageCircle className="h-3.5 w-3.5" />
                     Telegram
+                  </span>
+                </SelectItem>
+                <SelectItem value="whatsapp">
+                  <span className="flex items-center gap-2">
+                    <Smartphone className="h-3.5 w-3.5" />
+                    WhatsApp
                   </span>
                 </SelectItem>
               </SelectContent>
@@ -318,7 +509,7 @@ export function ChannelForm({
             )}
           </div>
 
-          {/* Dynamic config */}
+          {/* Dynamic config: Email */}
           {channelType === 'email' && (
             <div className="space-y-1.5">
               <Label htmlFor="email-recipients">Recipients</Label>
@@ -335,6 +526,7 @@ export function ChannelForm({
             </div>
           )}
 
+          {/* Dynamic config: Telegram */}
           {channelType === 'telegram' && (
             <div className="space-y-1.5">
               <Label htmlFor="telegram-chat-id">Chat ID</Label>
@@ -351,6 +543,144 @@ export function ChannelForm({
               {errors.chat_id && (
                 <p className="text-xs text-destructive">{errors.chat_id}</p>
               )}
+            </div>
+          )}
+
+          {/* Dynamic config: WhatsApp */}
+          {channelType === 'whatsapp' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>WhatsApp Recipients</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addWhatsappRow}
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Add Recipient
+                </Button>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Only users who have opted in to WhatsApp alerts from their profile
+                settings will receive messages. Users marked &quot;Not opted in&quot; should
+                enable WhatsApp from Settings &gt; Profile first.
+              </p>
+
+              {errors.whatsapp_recipients && (
+                <p className="text-xs text-destructive">
+                  {errors.whatsapp_recipients}
+                </p>
+              )}
+
+              {orgUsersLoading && (
+                <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Loading organization users...
+                </div>
+              )}
+
+              {whatsappRows.length === 0 && !orgUsersLoading && (
+                <div className="rounded-md border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  No recipients added yet. Click &quot;Add Recipient&quot; to select users.
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {whatsappRows.map((row, index) => {
+                  const selectedUser = orgUsers.find((u) => u.id === row.user_id)
+                  const isOptedIn = selectedUser?.settings?.whatsapp_opt_in === true
+
+                  return (
+                    <div
+                      key={row.key}
+                      className="space-y-2 rounded-md border p-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Recipient {index + 1}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                          onClick={() => removeWhatsappRow(row.key)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+
+                      {/* User select */}
+                      <div className="space-y-1">
+                        <Label className="text-xs">User</Label>
+                        <Select
+                          value={row.user_id}
+                          onValueChange={(v) =>
+                            updateWhatsappRow(row.key, 'user_id', v)
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a user..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {orgUsers.map((user) => {
+                              const opted =
+                                user.settings?.whatsapp_opt_in === true
+                              return (
+                                <SelectItem key={user.id} value={user.id}>
+                                  <span className="flex items-center gap-2">
+                                    <span>
+                                      {user.full_name || user.id}
+                                    </span>
+                                    {!opted && (
+                                      <Badge
+                                        variant="outline"
+                                        className="ml-1 text-[10px]"
+                                      >
+                                        Not opted in
+                                      </Badge>
+                                    )}
+                                  </span>
+                                </SelectItem>
+                              )
+                            })}
+                          </SelectContent>
+                        </Select>
+                        {selectedUser && !isOptedIn && (
+                          <p className="text-xs text-amber-600">
+                            This user has not opted in to WhatsApp alerts yet.
+                          </p>
+                        )}
+                        {errors[`whatsapp_user_${index}`] && (
+                          <p className="text-xs text-destructive">
+                            {errors[`whatsapp_user_${index}`]}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Phone input */}
+                      <div className="space-y-1">
+                        <Label className="text-xs">Phone Number</Label>
+                        <Input
+                          type="tel"
+                          placeholder="+201234567890"
+                          value={row.phone}
+                          onChange={(e) =>
+                            updateWhatsappRow(row.key, 'phone', e.target.value)
+                          }
+                        />
+                        {errors[`whatsapp_phone_${index}`] && (
+                          <p className="text-xs text-destructive">
+                            {errors[`whatsapp_phone_${index}`]}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
