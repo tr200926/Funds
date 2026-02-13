@@ -5,8 +5,9 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 ## Current Plan Progress
 
 - **Latest Phase:** 04-alert-engine-email-telegram
-- **Latest Plan:** 04 (Alert history and notification channels UI) -- completed 2026-02-13. Alert history DataTable at /alerts with severity/status/time filtering, real-time updates, and detail dialog with acknowledge/dismiss/resolve actions. Notification channel config at /settings/notifications with email/telegram CRUD and quiet hours.
-- **Next Steps:** Execute Phase 04 Plan 05 (Edge Functions for alert evaluation and dispatch) or Plan 01/02 (database triggers and Edge Functions).
+- **Latest Plan:** 02 (Edge Functions) -- completed 2026-02-13. Three Supabase Edge Functions: evaluate-alerts (trigger->rules->cooldown->alert->dispatch), dispatch-notifications (email via Resend + Telegram Bot API), escalate-alerts (severity promotion for unacknowledged alerts).
+- **Completed Plans:** 04-01 (DB triggers + shared code), 04-02 (Edge Functions), 04-03 (Alert rules UI), 04-04 (Alert history + channels UI)
+- **Next Steps:** Execute Phase 04 Plan 05 (E2E verification checkpoint).
 
 ## Decisions Recorded
 
@@ -40,4 +41,4 @@ This repository still uses a bootstrap-style `STATE.md` because the canonical GS
 
 ## Session Notes
 
-- **Last Work Session:** Completed Phase 04 Plan 04 (Alert history and notification channels) on 2026-02-13; commits `966a558` (alert history page + detail dialog) and `a6a57b6` (notification channel config page) add the alert monitoring and channel management UI with real-time updates, action buttons, and email/telegram CRUD.
+- **Last Work Session:** Completed Phase 04 Plans 01-04 on 2026-02-13. Wave 1 (04-01, 04-03, 04-04) ran in parallel: DB triggers + shared modules, alert rules UI, alert history + channels. Wave 2 (04-02) built directly: 3 Edge Functions for evaluate/dispatch/escalate. Ready for 04-05 verification checkpoint.
