@@ -61,8 +61,9 @@ Plans:
 **Requirements**: R6.1-R6.3
 **Depends on**: Phase 4
 **Plans:** 3 plans
+**Status:** Complete
 
 Plans:
-- [ ] 05-01-PLAN.md -- Database migration (channel type constraint, profile defaults) + dispatch-notifications WhatsApp case + notification formatter
-- [ ] 05-02-PLAN.md -- Dashboard WhatsApp channel config form + per-user opt-in toggle on profile settings
-- [ ] 05-03-PLAN.md -- End-to-end WhatsApp integration verification checkpoint
+- [x] 05-01-PLAN.md -- Database migration (channel type constraint, profile defaults) + dispatch-notifications WhatsApp case + notification formatter
+- [x] 05-02-PLAN.md -- Dashboard WhatsApp channel config form + per-user opt-in toggle on profile settings
+- [x] 05-03-PLAN.md -- End-to-end WhatsApp integration verification checkpoint
