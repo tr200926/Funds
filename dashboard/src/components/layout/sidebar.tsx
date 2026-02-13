@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Activity, LayoutDashboard } from 'lucide-react'
+import { Activity, Bell, LayoutDashboard } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,7 @@ import type { UserRole } from '@/hooks/use-user'
 
 export const NAV_ITEMS = [
   { label: 'Overview', href: '/overview', icon: LayoutDashboard },
+  { label: 'Alerts', href: '/alerts', icon: Bell },
   { label: 'Pipeline', href: '/pipeline', icon: Activity },
 ]
 

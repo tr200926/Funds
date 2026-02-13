@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import type { ReactNode } from 'react'
+import { Toaster } from 'sonner'
 
 import './globals.css'
 
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} min-h-screen bg-background text-foreground antialiased`}>
         {children}
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   )
