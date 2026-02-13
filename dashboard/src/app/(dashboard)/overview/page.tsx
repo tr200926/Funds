@@ -7,11 +7,11 @@ import { createClient } from '@/lib/supabase/server'
 export default async function OverviewPage() {
   const supabase = await createClient()
   const {
-    data: claimsData,
-    error: claimsError,
-  } = await supabase.auth.getClaims()
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
 
-  if (claimsError || !claimsData?.claims) {
+  if (authError || !user) {
     redirect('/login')
   }
 

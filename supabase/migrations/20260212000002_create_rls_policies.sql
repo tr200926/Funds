@@ -6,28 +6,32 @@ SET search_path TO public;
 
 -- Helper functions ---------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION auth.user_org_id()
+CREATE OR REPLACE FUNCTION public.user_org_id()
 RETURNS UUID
 LANGUAGE sql
 STABLE
+SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT org_id
   FROM public.profiles
   WHERE id = auth.uid();
 $$;
 
-CREATE OR REPLACE FUNCTION auth.user_role()
+CREATE OR REPLACE FUNCTION public.user_role()
 RETURNS TEXT
 LANGUAGE sql
 STABLE
+SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT role
   FROM public.profiles
   WHERE id = auth.uid();
 $$;
 
-COMMENT ON FUNCTION auth.user_org_id IS 'Returns org_id for currently authenticated user';
-COMMENT ON FUNCTION auth.user_role IS 'Returns role (admin/manager/viewer) for current user';
+COMMENT ON FUNCTION public.user_org_id IS 'Returns org_id for currently authenticated user';
+COMMENT ON FUNCTION public.user_role IS 'Returns role (admin/manager/viewer) for current user';
 
 -- Enable Row Level Security on all user-facing tables ---------------------
 
@@ -48,7 +52,7 @@ CREATE POLICY "Users can view their organization"
   ON organizations
   FOR SELECT
   TO authenticated
-  USING (id = auth.user_org_id());
+  USING (id = public.user_org_id());
 
 CREATE POLICY "Service role can manage organizations"
   ON organizations
@@ -63,7 +67,7 @@ CREATE POLICY "Users can view profiles in their org"
   ON profiles
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Service role can insert profiles"
   ON profiles
@@ -83,12 +87,12 @@ CREATE POLICY "Admins can update org profiles"
   FOR UPDATE
   TO authenticated
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() = 'admin'
+    org_id = public.user_org_id()
+    AND public.user_role() = 'admin'
   )
   WITH CHECK (
-    org_id = auth.user_org_id()
-    AND auth.user_role() = 'admin'
+    org_id = public.user_org_id()
+    AND public.user_role() = 'admin'
   );
 
 CREATE POLICY "Service role can delete profiles"
@@ -103,15 +107,15 @@ CREATE POLICY "Users can view ad accounts in their org"
   ON ad_accounts
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Admins and managers can insert ad accounts"
   ON ad_accounts
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager')
   );
 
 CREATE POLICY "Admins and managers can update ad accounts"
@@ -119,12 +123,12 @@ CREATE POLICY "Admins and managers can update ad accounts"
   FOR UPDATE
   TO authenticated
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager')
   )
   WITH CHECK (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager')
   );
 
 CREATE POLICY "Admins can delete ad accounts"
@@ -132,8 +136,8 @@ CREATE POLICY "Admins can delete ad accounts"
   FOR DELETE
   TO authenticated
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() = 'admin'
+    org_id = public.user_org_id()
+    AND public.user_role() = 'admin'
   );
 
 -- Spend Records ----------------------------------------------------------
@@ -142,7 +146,7 @@ CREATE POLICY "Users can view spend records in their org"
   ON spend_records
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Service role manages spend records"
   ON spend_records
@@ -157,7 +161,7 @@ CREATE POLICY "Users can view balance snapshots in their org"
   ON balance_snapshots
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Service role manages balance snapshots"
   ON balance_snapshots
@@ -172,15 +176,15 @@ CREATE POLICY "Users can view alert rules in their org"
   ON alert_rules
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Admins and managers can create alert rules"
   ON alert_rules
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager')
   );
 
 CREATE POLICY "Admins and managers can update alert rules"
@@ -188,12 +192,12 @@ CREATE POLICY "Admins and managers can update alert rules"
   FOR UPDATE
   TO authenticated
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager')
   )
   WITH CHECK (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager')
   );
 
 CREATE POLICY "Admins and managers can delete alert rules"
@@ -201,8 +205,8 @@ CREATE POLICY "Admins and managers can delete alert rules"
   FOR DELETE
   TO authenticated
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() IN ('admin', 'manager')
+    org_id = public.user_org_id()
+    AND public.user_role() IN ('admin', 'manager')
   );
 
 -- Alerts ----------------------------------------------------------------
@@ -211,7 +215,7 @@ CREATE POLICY "Users can view alerts in their org"
   ON alerts
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Service role can insert alerts"
   ON alerts
@@ -223,8 +227,8 @@ CREATE POLICY "Users can update alerts in their org"
   ON alerts
   FOR UPDATE
   TO authenticated
-  USING (org_id = auth.user_org_id())
-  WITH CHECK (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id())
+  WITH CHECK (org_id = public.user_org_id());
 
 CREATE POLICY "Service role can delete alerts"
   ON alerts
@@ -243,7 +247,7 @@ CREATE POLICY "Users can view alert deliveries via parent org"
       SELECT 1
       FROM alerts a
       WHERE a.id = alert_deliveries.alert_id
-        AND a.org_id = auth.user_org_id()
+        AND a.org_id = public.user_org_id()
     )
   );
 
@@ -262,7 +266,7 @@ CREATE POLICY "Users can update alert deliveries in their org"
       SELECT 1
       FROM alerts a
       WHERE a.id = alert_deliveries.alert_id
-        AND a.org_id = auth.user_org_id()
+        AND a.org_id = public.user_org_id()
     )
   )
   WITH CHECK (
@@ -270,7 +274,7 @@ CREATE POLICY "Users can update alert deliveries in their org"
       SELECT 1
       FROM alerts a
       WHERE a.id = alert_deliveries.alert_id
-        AND a.org_id = auth.user_org_id()
+        AND a.org_id = public.user_org_id()
     )
   );
 
@@ -286,19 +290,19 @@ CREATE POLICY "Users can view notification channels in their org"
   ON notification_channels
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Admins can manage notification channels"
   ON notification_channels
   FOR ALL
   TO authenticated
   USING (
-    org_id = auth.user_org_id()
-    AND auth.user_role() = 'admin'
+    org_id = public.user_org_id()
+    AND public.user_role() = 'admin'
   )
   WITH CHECK (
-    org_id = auth.user_org_id()
-    AND auth.user_role() = 'admin'
+    org_id = public.user_org_id()
+    AND public.user_role() = 'admin'
   );
 
 -- Pipeline Runs ---------------------------------------------------------
@@ -307,7 +311,7 @@ CREATE POLICY "Users can view pipeline runs in their org"
   ON pipeline_runs
   FOR SELECT
   TO authenticated
-  USING (org_id = auth.user_org_id());
+  USING (org_id = public.user_org_id());
 
 CREATE POLICY "Service role manages pipeline runs"
   ON pipeline_runs

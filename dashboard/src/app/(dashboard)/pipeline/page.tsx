@@ -9,11 +9,11 @@ type PipelineRun = Tables<'pipeline_runs'>
 export default async function PipelineHealthPage() {
   const supabase = await createClient()
   const {
-    data: claimsData,
-    error: claimsError,
-  } = await supabase.auth.getClaims()
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
 
-  if (claimsError || !claimsData?.claims) {
+  if (authError || !user) {
     redirect('/login')
   }
 

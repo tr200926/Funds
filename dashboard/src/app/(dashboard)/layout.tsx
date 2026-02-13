@@ -12,19 +12,21 @@ interface DashboardLayoutProps {
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
   const supabase = await createClient()
-  const { data, error } = await supabase.auth.getClaims()
-  const claims = data?.claims
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
 
-  if (error || !claims) {
+  if (error || !user) {
     redirect('/login')
   }
 
-  const role = (claims.app_metadata?.role as UserRole) ?? 'viewer'
+  const role = (user.app_metadata?.role as UserRole) ?? 'viewer'
   const fullName =
-    (claims.user_metadata?.full_name as string | undefined) ??
-    (claims.email as string | undefined) ??
+    (user.user_metadata?.full_name as string | undefined) ??
+    user.email ??
     'User'
-  const email = (claims.email as string | undefined) ?? null
+  const email = user.email ?? null
 
   return (
     <div className="min-h-screen bg-muted/20">

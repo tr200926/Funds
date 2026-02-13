@@ -47,6 +47,23 @@ CREATE TABLE IF NOT EXISTS platforms (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations (id),
+    pipeline_name TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('running', 'success', 'failed', 'partial')),
+    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at TIMESTAMPTZ,
+    accounts_processed INT DEFAULT 0,
+    accounts_failed INT DEFAULT 0,
+    error_log JSONB,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS pipeline_runs_org_idx ON pipeline_runs (org_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS pipeline_runs_name_idx ON pipeline_runs (pipeline_name, started_at DESC);
+
 CREATE TABLE IF NOT EXISTS ad_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations (id),
@@ -179,23 +196,6 @@ CREATE TABLE IF NOT EXISTS notification_channels (
 );
 
 CREATE INDEX IF NOT EXISTS notification_channels_org_enabled_idx ON notification_channels (org_id, is_enabled);
-
-CREATE TABLE IF NOT EXISTS pipeline_runs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    org_id UUID NOT NULL REFERENCES organizations (id),
-    pipeline_name TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('running', 'success', 'failed', 'partial')),
-    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    completed_at TIMESTAMPTZ,
-    accounts_processed INT DEFAULT 0,
-    accounts_failed INT DEFAULT 0,
-    error_log JSONB,
-    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS pipeline_runs_org_idx ON pipeline_runs (org_id, started_at DESC);
-CREATE INDEX IF NOT EXISTS pipeline_runs_name_idx ON pipeline_runs (pipeline_name, started_at DESC);
 
 -- Schema documentation comments and guidance for maintainers
 COMMENT ON TABLE organizations IS 'Tenant organizations with timezone + settings metadata';

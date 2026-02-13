@@ -84,11 +84,11 @@ export default async function AccountDetailPage({ params }: AccountDetailPagePro
   const { id } = await params
   const supabase = await createClient()
   const {
-    data: claimsData,
-    error: claimsError,
-  } = await supabase.auth.getClaims()
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
 
-  if (claimsError || !claimsData?.claims) {
+  if (authError || !user) {
     redirect('/login')
   }
 
