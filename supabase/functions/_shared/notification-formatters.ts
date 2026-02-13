@@ -1,8 +1,9 @@
 /**
  * Notification formatters for the alert engine.
  *
- * Provides Email HTML and Telegram text formatting for alert notifications,
- * plus quiet hours checking for notification channel active_hours.
+ * Provides Email HTML, Telegram text, and WhatsApp template parameter
+ * formatting for alert notifications, plus quiet hours checking for
+ * notification channel active_hours.
  *
  * All timestamps displayed in Africa/Cairo timezone (per project decision #3).
  */
@@ -166,6 +167,79 @@ export function formatAlertTelegramText(alert: AlertWithDetails): string {
   ];
 
   return lines.filter((line) => line !== null).join("\n");
+}
+
+// =============================================================================
+// WhatsApp Template Parameter Formatter
+// =============================================================================
+
+/**
+ * WhatsApp template parameter result.
+ *
+ * `templateName` maps to a pre-approved Meta WhatsApp template:
+ *   - `critical_alert`: for critical/emergency severity alerts
+ *   - `balance_warning`: default for balance_threshold/time_to_depletion/other alerts
+ *
+ * `params` is an ordered array of strings matching the template's {{1}}, {{2}}, etc.
+ */
+export interface WhatsAppTemplateParams {
+  templateName: string;
+  params: string[];
+}
+
+/**
+ * Formats an alert into WhatsApp Cloud API template parameters.
+ *
+ * Selects the appropriate pre-approved template based on alert severity and
+ * builds ordered parameter arrays matching the template placeholders:
+ *
+ * **critical_alert** (severity = critical | emergency):
+ *   {{1}} = account name
+ *   {{2}} = alert message
+ *   {{3}} = current balance string (currency + amount)
+ *   {{4}} = Cairo timezone timestamp
+ *
+ * **balance_warning** (all other severities):
+ *   {{1}} = account name
+ *   {{2}} = alert message
+ *   {{3}} = days-remaining projection from context_data (or empty string)
+ *   {{4}} = Cairo timezone timestamp
+ *
+ * Uses Africa/Cairo timezone via toLocaleString (per project decision #3).
+ * Coerces NUMERIC string fields with Number() before formatting (per decision #2).
+ */
+export function formatAlertWhatsAppParams(
+  alert: AlertWithDetails
+): WhatsAppTemplateParams {
+  const accountName = alert.ad_accounts?.account_name ?? "Unknown";
+  const cairoTimestamp = formatCairoTimestamp(alert.created_at);
+
+  // critical/emergency -> critical_alert template
+  if (alert.severity === "critical" || alert.severity === "emergency") {
+    const currency = alert.ad_accounts?.currency ?? "EGP";
+    const balanceString =
+      alert.context_data?.balance !== undefined
+        ? `${currency} ${Number(alert.context_data.balance).toLocaleString()}`
+        : alert.ad_accounts?.current_balance != null
+          ? `${currency} ${Number(alert.ad_accounts.current_balance).toLocaleString()}`
+          : "N/A";
+
+    return {
+      templateName: "critical_alert",
+      params: [accountName, alert.message, balanceString, cairoTimestamp],
+    };
+  }
+
+  // Default -> balance_warning template
+  const projection =
+    alert.context_data?.days_remaining !== undefined
+      ? `Funds may deplete in ~${alert.context_data.days_remaining} days`
+      : "";
+
+  return {
+    templateName: "balance_warning",
+    params: [accountName, alert.message, projection, cairoTimestamp],
+  };
 }
 
 // =============================================================================
